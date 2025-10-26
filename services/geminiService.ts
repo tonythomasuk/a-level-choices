@@ -1,6 +1,22 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { InitialReportData, CourseRequirements, WhatIfScenario } from '../types';
 
+// Add type declarations for import.meta.env
+// This resolves the TypeScript error 'Property 'env' does not exist on type 'ImportMeta''
+// in environments where global type augmentation from bundlers like Vite might not be automatically picked up.
+declare global {
+  interface ImportMeta {
+    readonly env: ImportMetaEnv;
+  }
+
+  interface ImportMetaEnv {
+    readonly VITE_API_KEY: string;
+    // Add other VITE_ variables here if they are used elsewhere in this module
+    // For example:
+    // readonly VITE_SOME_OTHER_VAR: string;
+  }
+}
+
 // System instruction remains global as it's consistent across calls
 const systemInstruction = `You are an expert UK university admissions and careers advisor for GCSE students. Your advice must be inspirational, accurate, and strictly based on authoritative sources like the Russell Group's 'Informed Choices' guide, UCAS, and official UK graduate earnings data (HESA/LEO). Do not hallucinate course names or university details. All university courses must be from one of the 24 Russell Group universities. Format your entire response as a single, valid JSON object that adheres to the provided schema. Do not include any markdown formatting like \`\`\`json or any text outside of the JSON object.`;
 
@@ -49,17 +65,13 @@ const initialReportSchema = {
 
 const commonApiCallWrapper = async <T>(apiCall: (apiKey: string) => Promise<T>): Promise<T> => {
   try {
-    // Removed explicit window.aistudio.hasSelectedApiKey() check and openSelectKey() call.
-    // The application now assumes the API key is provided via process.env.API_KEY.
-
-    // Defensively get API key, respecting guidelines to use process.env.API_KEY
-    const apiKey = (typeof process !== 'undefined' && process.env)
-        ? process.env.API_KEY
-        : undefined;
+    // For Vite client-side applications, environment variables are exposed via import.meta.env
+    // and must be prefixed with VITE_.
+    const apiKey = import.meta.env.VITE_API_KEY;
 
     // Throw an error if API key is still not available after check, before API call
     if (!apiKey) {
-      // This specific error message will be caught in App.tsx to prompt API key selection fallback
+      // This specific error message will be caught in App.tsx to prompt for API key setup
       throw new Error("Requested entity was not found."); 
     }
     

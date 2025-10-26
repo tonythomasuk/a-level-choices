@@ -66,9 +66,8 @@ const App: React.FC = () => {
       // As per guidelines, if "Requested entity was not found.", reset key selection state and prompt user to select key again.
       // This path is now only triggered if process.env.API_KEY is truly inaccessible or invalid
       if (e && e.message && typeof e.message === 'string' && e.message.toLowerCase().includes("requested entity was not found.")) {
-         setError('Your API key might be invalid or has issues. Please ensure it is correctly set as an environment variable (API_KEY) and try again.');
-         // We don't have a UI to re-select, so just display the error.
-         setHasApiKeySelected(false); // Set to false to indicate an issue, even if no direct UI to re-select
+         setError('Your API key might be invalid or has issues. Please ensure it is correctly set as an environment variable (VITE_API_KEY on Vercel) and try again.');
+         // Removed setHasApiKeySelected(false) as it no longer serves a purpose with the API key selection UI removed.
       } else {
         setError('An error occurred while generating your results. Please try again. If the issue persists, check your browser console for details.');
       }
