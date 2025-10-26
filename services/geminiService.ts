@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import type { InitialReportData, CourseRequirements, WhatIfScenario } from '../types';
 
@@ -48,14 +47,10 @@ const initialReportSchema = {
     required: ['section2Data', 'skippableSubjects']
 };
 
-// Fix: Change commonApiCallWrapper signature to accept apiCall that takes apiKey
 const commonApiCallWrapper = async <T>(apiCall: (apiKey: string) => Promise<T>): Promise<T> => {
   try {
-    if (window.aistudio && !(await window.aistudio.hasSelectedApiKey())) {
-      // As per guidelines, if key not selected, open selection dialog.
-      // App.tsx handles the `hasApiKeySelected` state update after `openSelectKey` call.
-      await window.aistudio.openSelectKey();
-    }
+    // Removed explicit window.aistudio.hasSelectedApiKey() check and openSelectKey() call.
+    // The application now assumes the API key is provided via process.env.API_KEY.
 
     // Defensively get API key, respecting guidelines to use process.env.API_KEY
     const apiKey = (typeof process !== 'undefined' && process.env)
@@ -64,11 +59,11 @@ const commonApiCallWrapper = async <T>(apiCall: (apiKey: string) => Promise<T>):
 
     // Throw an error if API key is still not available after check, before API call
     if (!apiKey) {
-      // This specific error message will be caught in App.tsx to prompt API key selection
+      // This specific error message will be caught in App.tsx to prompt API key selection fallback
       throw new Error("Requested entity was not found."); 
     }
     
-    // Fix: Pass apiKey to the apiCall function
+    // Pass apiKey to the apiCall function
     return await apiCall(apiKey);
   } catch (error: any) {
     console.error("Gemini API call error:", error);
@@ -78,7 +73,6 @@ const commonApiCallWrapper = async <T>(apiCall: (apiKey: string) => Promise<T>):
 };
 
 export const generateInitialReport = async (subjects: string[]): Promise<InitialReportData> => {
-  // Fix: The anonymous function now matches the expected signature of commonApiCallWrapper
   return commonApiCallWrapper(async (apiKey: string) => {
     // Create new GoogleGenAI instance right before making an API call to ensure it always uses the most up-to-date API key.
     const ai = new GoogleGenAI({ apiKey }); 
@@ -111,7 +105,6 @@ const courseRequirementsSchema = {
 };
 
 export const getCourseRequirements = async (courseName: string, universityName: string): Promise<CourseRequirements> => {
-  // Fix: The anonymous function now matches the expected signature of commonApiCallWrapper
   return commonApiCallWrapper(async (apiKey: string) => { 
     // Create new GoogleGenAI instance right before making an API call to ensure it always uses the most up-to-date API key.
     const ai = new GoogleGenAI({ apiKey });
@@ -138,7 +131,6 @@ const whatIfScenarioSchema = {
 };
 
 export const generateWhatIfScenario = async (subjects: string[], subjectToReplace: string, newSubject: string): Promise<WhatIfScenario> => {
-  // Fix: The anonymous function now matches the expected signature of commonApiCallWrapper
   return commonApiCallWrapper(async (apiKey: string) => { 
     // Create new GoogleGenAI instance right before making an API call to ensure it always uses the most up-to-date API key.
     const ai = new GoogleGenAI({ apiKey });

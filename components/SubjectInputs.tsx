@@ -29,7 +29,7 @@ const SubjectInputs: React.FC<SubjectInputsProps> = ({ subjects, setSubjects, on
         disabled={disabled}
         className="w-full flex items-center justify-center bg-gradient-to-r from-brand-primary to-indigo-600 text-white font-bold py-4 px-6 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
       >
-        <svg xmlns="http://www.w.3.org/2000/svg" className="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
         </svg>
         Generate Possible Futures

@@ -50,17 +50,5 @@ export interface CourseRequirements {
   link: string;
 }
 
-// Fix: Define the AIStudio interface to be used in the global Window declaration.
-// This resolves the "All declarations of 'aistudio' must have identical modifiers"
-// and "Subsequent property declarations must have the same type" errors.
-interface AIStudio {
-  hasSelectedApiKey: () => Promise<boolean>;
-  openSelectKey: () => Promise<void>;
-}
-
-// Declare window.aistudio globally in a single place to avoid conflicts.
-declare global {
-  interface Window {
-    aistudio: AIStudio;
-  }
-}
+// Removed the AIStudio interface and global Window declaration for aistudio.
+// The application no longer uses window.aistudio for API key management.

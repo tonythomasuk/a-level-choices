@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useCallback } from 'react';
 import Header from './components/Header';
 import SubjectInputs from './components/SubjectInputs';
@@ -14,22 +13,17 @@ const App: React.FC = () => {
   const [subjects, setSubjects] = useState<string[]>(['', '', '', '']);
   const [initialReportData, setInitialReportData] = useState<InitialReportData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  // Fix: Initialize useState with the first element of LOADING_MESSAGES
   const [loadingMessage, setLoadingMessage] = useState(LOADING_MESSAGES[0]);
   const [error, setError] = useState<string | null>(null);
-  const [hasApiKeySelected, setHasApiKeySelected] = useState(false);
+  // Assume API key is selected / available via process.env.API_KEY by default
+  const [hasApiKeySelected, setHasApiKeySelected] = useState(true);
 
   useEffect(() => {
     // Set random default subjects on initial load
     const shuffled = [...A_LEVEL_SUBJECTS].sort(() => 0.5 - Math.random());
     setSubjects([shuffled[0], shuffled[1], shuffled[2], '']);
-
-    const checkApiKey = async () => {
-      if (window.aistudio) {
-        setHasApiKeySelected(await window.aistudio.hasSelectedApiKey());
-      }
-    };
-    checkApiKey();
-  }, []);
+  }, []); // Empty dependency array means this runs once on mount
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
@@ -38,6 +32,8 @@ const App: React.FC = () => {
         setLoadingMessage(prev => {
           const currentIndex = LOADING_MESSAGES.indexOf(prev);
           const nextIndex = (currentIndex + 1) % LOADING_MESSAGES.length;
+          // The setter function `setLoadingMessage` should be called with the new state value.
+          // This line was already mostly correct once `setLoadingMessage` was properly typed.
           return LOADING_MESSAGES[nextIndex];
         });
       }, 2500);
@@ -52,10 +48,8 @@ const App: React.FC = () => {
       return;
     }
 
-    if (!hasApiKeySelected) {
-      setError('Please select your Gemini API key before generating results.');
-      return;
-    }
+    // No longer need to check hasApiKeySelected here, as we assume it's available via env var.
+    // The service will handle the actual API key availability.
 
     // Reset state for new generation
     setError(null);
@@ -70,34 +64,28 @@ const App: React.FC = () => {
     } catch (e: any) {
       console.error(e);
       // As per guidelines, if "Requested entity was not found.", reset key selection state and prompt user to select key again.
+      // This path is now only triggered if process.env.API_KEY is truly inaccessible or invalid
       if (e && e.message && typeof e.message === 'string' && e.message.toLowerCase().includes("requested entity was not found.")) {
-         setError('Your API key might be invalid or has issues. Please re-select it.');
-         setHasApiKeySelected(false);
+         setError('Your API key might be invalid or has issues. Please ensure it is correctly set as an environment variable (API_KEY) and try again.');
+         // We don't have a UI to re-select, so just display the error.
+         setHasApiKeySelected(false); // Set to false to indicate an issue, even if no direct UI to re-select
       } else {
-        setError('An error occurred while generating your results. Please ensure your API key is correctly set and try again.');
+        setError('An error occurred while generating your results. Please try again. If the issue persists, check your browser console for details.');
       }
     } finally {
       setIsLoading(false);
     }
-  }, [subjects, hasApiKeySelected]);
+  }, [subjects]); // Removed hasApiKeySelected from dependencies
 
-  const handleSelectApiKey = useCallback(async () => {
-    if (window.aistudio) {
-      await window.aistudio.openSelectKey();
-      // Assume key selection was successful to mitigate race condition as per guidelines
-      setHasApiKeySelected(true);
-      setError(null); // Clear any previous API key errors
-    } else {
-      setError("API key selection mechanism (window.aistudio) not available.");
-    }
-  }, []);
+  // Removed handleSelectApiKey function as the button and logic are removed.
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-brand-dark">
       <div className="container mx-auto p-4 md:p-8 max-w-4xl">
         <Header />
         
-        {!hasApiKeySelected && (
+        {/* The API key selection UI is removed as per user request */}
+        {/* {!hasApiKeySelected && (
             <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md shadow-md mb-6" role="alert">
                 <p className="font-bold">Configuration Error</p>
                 <p className="mb-3">The Gemini API key is not selected. Please select your API key to proceed.</p>
@@ -114,10 +102,10 @@ const App: React.FC = () => {
                   </a>
                 </p>
             </div>
-        )}
+        )} */}
 
         <main>
-          <SubjectInputs subjects={subjects} setSubjects={setSubjects} onGenerate={handleGenerateFutures} disabled={isLoading || !hasApiKeySelected} />
+          <SubjectInputs subjects={subjects} setSubjects={setSubjects} onGenerate={handleGenerateFutures} disabled={isLoading} />
           
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative my-4 shadow-sm" role="alert">
