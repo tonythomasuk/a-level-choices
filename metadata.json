@@ -1,5 +1,5 @@
-
 {
   "name": "A-level Choices",
-  "description": "An interactive, friendly guide to help UK students choose their A-level subjects and explore potential university and career paths based on their choices."
+  "description": "An interactive, friendly guide to help UK students choose their A-level subjects and explore potential university and career paths based on their choices.",
+  "requestFramePermissions": []
 }

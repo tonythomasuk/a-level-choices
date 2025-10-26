@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect, useCallback } from 'react';
 import Header from './components/Header';
 import SubjectInputs from './components/SubjectInputs';
@@ -8,17 +9,26 @@ import { generateInitialReport } from './services/geminiService';
 import { InitialReportData } from './types';
 import { LOADING_MESSAGES, A_LEVEL_SUBJECTS } from './constants';
 
+
 const App: React.FC = () => {
   const [subjects, setSubjects] = useState<string[]>(['', '', '', '']);
   const [initialReportData, setInitialReportData] = useState<InitialReportData | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState(LOADING_MESSAGES[0]);
   const [error, setError] = useState<string | null>(null);
+  const [hasApiKeySelected, setHasApiKeySelected] = useState(false);
 
   useEffect(() => {
     // Set random default subjects on initial load
     const shuffled = [...A_LEVEL_SUBJECTS].sort(() => 0.5 - Math.random());
     setSubjects([shuffled[0], shuffled[1], shuffled[2], '']);
+
+    const checkApiKey = async () => {
+      if (window.aistudio) {
+        setHasApiKeySelected(await window.aistudio.hasSelectedApiKey());
+      }
+    };
+    checkApiKey();
   }, []);
 
   useEffect(() => {
@@ -42,6 +52,11 @@ const App: React.FC = () => {
       return;
     }
 
+    if (!hasApiKeySelected) {
+      setError('Please select your Gemini API key before generating results.');
+      return;
+    }
+
     // Reset state for new generation
     setError(null);
     setInitialReportData(null);
@@ -52,28 +67,57 @@ const App: React.FC = () => {
       const activeSubjects = subjects.filter(s => s.trim() !== '');
       const data = await generateInitialReport(activeSubjects);
       setInitialReportData(data);
-    } catch (e) {
+    } catch (e: any) {
       console.error(e);
-      setError('An error occurred while generating your results. Please check your API key and try again. A 403 error often indicates an issue with the API key setup.');
+      // As per guidelines, if "Requested entity was not found.", reset key selection state and prompt user to select key again.
+      if (e && e.message && typeof e.message === 'string' && e.message.toLowerCase().includes("requested entity was not found.")) {
+         setError('Your API key might be invalid or has issues. Please re-select it.');
+         setHasApiKeySelected(false);
+      } else {
+        setError('An error occurred while generating your results. Please ensure your API key is correctly set and try again.');
+      }
     } finally {
       setIsLoading(false);
     }
-  }, [subjects]);
+  }, [subjects, hasApiKeySelected]);
+
+  const handleSelectApiKey = useCallback(async () => {
+    if (window.aistudio) {
+      await window.aistudio.openSelectKey();
+      // Assume key selection was successful to mitigate race condition as per guidelines
+      setHasApiKeySelected(true);
+      setError(null); // Clear any previous API key errors
+    } else {
+      setError("API key selection mechanism (window.aistudio) not available.");
+    }
+  }, []);
 
   return (
     <div className="min-h-screen bg-gray-50 font-sans text-brand-dark">
       <div className="container mx-auto p-4 md:p-8 max-w-4xl">
         <Header />
         
-        {!process.env.API_KEY && (
+        {!hasApiKeySelected && (
             <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-md shadow-md mb-6" role="alert">
                 <p className="font-bold">Configuration Error</p>
-                <p>The Gemini API key is missing. Please ensure the `API_KEY` environment variable is set correctly in your hosting environment (e.g., Vercel).</p>
+                <p className="mb-3">The Gemini API key is not selected. Please select your API key to proceed.</p>
+                <button 
+                  onClick={handleSelectApiKey} 
+                  className="bg-red-600 text-white font-bold py-2 px-4 rounded-md shadow-sm hover:bg-red-700 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isLoading}
+                >
+                  Select Gemini API Key
+                </button>
+                <p className="mt-3 text-sm">
+                  <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" rel="noopener noreferrer" className="text-red-700 underline hover:text-red-900">
+                    Learn about billing for Gemini API
+                  </a>
+                </p>
             </div>
         )}
 
         <main>
-          <SubjectInputs subjects={subjects} setSubjects={setSubjects} onGenerate={handleGenerateFutures} disabled={isLoading} />
+          <SubjectInputs subjects={subjects} setSubjects={setSubjects} onGenerate={handleGenerateFutures} disabled={isLoading || !hasApiKeySelected} />
           
           {error && (
             <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative my-4 shadow-sm" role="alert">
