@@ -1,9 +1,10 @@
-import React, { useState, useCallback } from 'react';
+
+import React, { useState, useCallback, useEffect } from 'react';
 import type { InitialReportData, UniversityCourse, WhatIfScenario } from '../types';
 import LoadingIndicator from './LoadingIndicator';
 import RequirementsModal from './RequirementsModal';
-import { generateWhatIfScenario } from '../services/geminiService';
-import { A_LEVEL_SUBJECTS } from '../constants';
+import { generateWhatIfScenario, getUniversitySpecificCourses } from '../services/geminiService';
+import { A_LEVEL_SUBJECTS, RUSSELL_GROUP_UNIVERSITIES } from '../constants';
 
 const SectionCard: React.FC<{ title: string; icon: React.ReactElement; children: React.ReactNode }> = ({ title, icon, children }) => (
     <div className="bg-white rounded-xl shadow-lg p-6 mb-6 border border-gray-200 transition-all duration-300 hover:shadow-xl hover:border-brand-primary/50">
@@ -36,16 +37,17 @@ const WhatIfScenarioResult: React.FC<{ scenario: WhatIfScenario }> = ({ scenario
     <div className="mt-4 p-4 border-l-4 border-brand-secondary/50 bg-green-50/50 rounded-r-lg animate-fade-in">
         <p className="font-bold text-lg mb-2">New Scenario: Substituting <span className="text-brand-secondary">{scenario.substitutedSubject}</span></p>
         <p className="mb-2"><strong>New Combination:</strong> {scenario.newCombination.join(', ')}</p>
-        <p>{scenario.scenarioStory}</p>
+        <div dangerouslySetInnerHTML={{ __html: scenario.scenarioStory.replace(/\n/g, '<br /><br />') }} />
     </div>
 );
 
 interface ResultsContainerProps {
     initialReportData: InitialReportData;
     subjects: string[];
+    onRerun: (newSubjects: string[]) => void;
 }
 
-const ResultsContainer: React.FC<ResultsContainerProps> = ({ initialReportData, subjects }) => {
+const ResultsContainer: React.FC<ResultsContainerProps> = ({ initialReportData, subjects, onRerun }) => {
     const { section2Data, skippableSubjects } = initialReportData;
     const [showMore, setShowMore] = useState(false);
     const [selectedCourse, setSelectedCourse] = useState<UniversityCourse | null>(null);
@@ -56,6 +58,39 @@ const ResultsContainer: React.FC<ResultsContainerProps> = ({ initialReportData, 
     const [isGeneratingScenario, setIsGeneratingScenario] = useState(false);
     const [generatedScenario, setGeneratedScenario] = useState<WhatIfScenario | null>(null);
     const [scenarioError, setScenarioError] = useState<string | null>(null);
+
+    // State for university course filter
+    const [universityFilter, setUniversityFilter] = useState('All');
+    const [originalCourses] = useState<UniversityCourse[]>(section2Data.universityCourses);
+    const [displayedCourses, setDisplayedCourses] = useState<UniversityCourse[]>(originalCourses);
+    const [isCourseLoading, setIsCourseLoading] = useState(false);
+    const [courseError, setCourseError] = useState<string | null>(null);
+
+    useEffect(() => {
+        const fetchCoursesForUniversity = async () => {
+            if (universityFilter === 'All') {
+                setDisplayedCourses(originalCourses);
+                setCourseError(null);
+                return;
+            }
+
+            setIsCourseLoading(true);
+            setCourseError(null);
+            try {
+                const newCourses = await getUniversitySpecificCourses(subjects, universityFilter);
+                setDisplayedCourses(newCourses);
+            } catch (error) {
+                console.error("Failed to fetch university-specific courses:", error);
+                setCourseError(`Could not load courses for ${universityFilter}. Please try again.`);
+                setDisplayedCourses([]); // Clear list on error
+            } finally {
+                setIsCourseLoading(false);
+            }
+        };
+
+        fetchCoursesForUniversity();
+    }, [universityFilter, originalCourses, subjects]);
+
 
     const handleGenerateScenario = useCallback(async () => {
         if (!subjectToReplace || !newSubject || subjectToReplace === newSubject) {
@@ -77,7 +112,7 @@ const ResultsContainer: React.FC<ResultsContainerProps> = ({ initialReportData, 
     }, [subjects, subjectToReplace, newSubject]);
 
     const alternativeSubjects = A_LEVEL_SUBJECTS.filter(s => !subjects.includes(s));
-
+    
     return (
         <div id="results-content" className="mt-12 animate-fade-in">
             {/* Section 2 */}
@@ -87,20 +122,55 @@ const ResultsContainer: React.FC<ResultsContainerProps> = ({ initialReportData, 
             </SectionCard>
 
             <SectionCard title="Your Future Story" icon={<StoryIcon />}>
-                <p>{section2Data.futureStory}</p>
+                <div dangerouslySetInnerHTML={{ __html: section2Data.futureStory.replace(/\n/g, '<br /><br />') }} />
+                <a href={`https://translate.google.com/?sl=en&tl=auto&text=${encodeURIComponent(section2Data.futureStory)}`} target="_blank" rel="noopener noreferrer" className="text-sm text-brand-primary hover:underline mt-4 inline-flex items-center gap-1">
+                    Translate Story
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                </a>
             </SectionCard>
 
             <SectionCard title="University Courses" icon={<UniversityIcon />}>
-                <ul className="list-disc pl-6 space-y-4">
-                    {section2Data.universityCourses.map((course, index) => (
-                        <li key={index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                            <div><strong>{course.name}</strong> ({course.university})</div>
-                            <button onClick={() => setSelectedCourse(course)} className="mt-2 sm:mt-0 text-sm bg-brand-primary/10 text-brand-primary font-semibold py-1 px-3 rounded-full hover:bg-brand-primary/20 transition-colors duration-200 self-start">
-                                See Requirements
-                            </button>
-                        </li>
-                    ))}
-                </ul>
+                <div className="mb-4">
+                    <label htmlFor="uni-filter" className="block text-sm font-medium text-gray-700 mb-1">Filter by University:</label>
+                    <select 
+                        id="uni-filter"
+                        value={universityFilter} 
+                        onChange={(e) => setUniversityFilter(e.target.value)}
+                        className="w-full p-2 border border-gray-300 rounded-md shadow-sm focus:ring-brand-primary focus:border-brand-primary disabled:opacity-70 disabled:cursor-not-allowed"
+                        disabled={isCourseLoading}
+                    >
+                        <option value="All">All Russell Group Universities</option>
+                        {RUSSELL_GROUP_UNIVERSITIES.sort().map(uni => <option key={uni} value={uni}>{uni}</option>)}
+                    </select>
+                </div>
+                 {isCourseLoading && (
+                    <div className="flex items-center justify-center p-4 text-gray-600">
+                        <div className="w-6 h-6 border-2 border-brand-primary border-t-transparent rounded-full animate-spin mr-3"></div>
+                        <span>Finding courses at {universityFilter}...</span>
+                    </div>
+                )}
+                {courseError && (
+                    <div className="bg-red-50 text-red-700 p-3 rounded-lg text-center my-2">
+                        <p>{courseError}</p>
+                    </div>
+                )}
+                {!isCourseLoading && !courseError && (
+                    <ul className="list-disc pl-6 space-y-4">
+                        {displayedCourses.length > 0 ? displayedCourses.map((course, index) => (
+                            <li key={index} className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                                <div><strong>{course.name}</strong> ({course.university})</div>
+                                <button onClick={() => setSelectedCourse(course)} className="mt-2 sm:mt-0 text-sm bg-brand-primary/10 text-brand-primary font-semibold py-1 px-3 rounded-full hover:bg-brand-primary/20 transition-colors duration-200 self-start">
+                                    See Requirements
+                                </button>
+                            </li>
+                        )) : <p className="text-gray-500">
+                                {universityFilter === 'All'
+                                ? "No university courses were found for this subject combination."
+                                : `No specific courses found for this subject combination at ${universityFilter}. Try another university or 'All Universities'.`}
+                            </p>
+                        }
+                    </ul>
+                )}
             </SectionCard>
 
             <SectionCard title="Popular Careers" icon={<CareerIcon />}>
@@ -152,7 +222,19 @@ const ResultsContainer: React.FC<ResultsContainerProps> = ({ initialReportData, 
                         </div>
                         {scenarioError && <p className="text-red-600 mt-3">{scenarioError}</p>}
                         {isGeneratingScenario && <div className="mt-4"><LoadingIndicator message="Crafting your new path..." /></div>}
-                        {generatedScenario && <WhatIfScenarioResult scenario={generatedScenario} />}
+                        {generatedScenario && (
+                          <>
+                            <WhatIfScenarioResult scenario={generatedScenario} />
+                            <div className="mt-4 text-center">
+                                <button
+                                    onClick={() => onRerun(generatedScenario.newCombination)}
+                                    className="bg-gradient-to-r from-brand-primary to-indigo-600 text-white font-bold py-3 px-6 rounded-lg shadow-md hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-300"
+                                >
+                                    Rerun Analysis with New Subjects
+                                </button>
+                            </div>
+                          </>
+                        )}
                     </SectionCard>
 
                     <SectionCard title="Could you skip this subject and return to it at Uni?" icon={<SkipIcon />}>

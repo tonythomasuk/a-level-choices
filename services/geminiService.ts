@@ -1,21 +1,6 @@
+
 import { GoogleGenAI, Type } from "@google/genai";
-import type { InitialReportData, CourseRequirements, WhatIfScenario } from '../types';
-
-// Add type declarations for import.meta.env
-// This resolves the TypeScript error 'Property 'env' does not exist on type 'ImportMeta''
-// in environments where global type augmentation from bundlers like Vite might not be automatically picked up.
-declare global {
-  interface ImportMeta {
-    readonly env: ImportMetaEnv;
-  }
-
-  interface ImportMetaEnv {
-    readonly VITE_API_KEY: string;
-    // Add other VITE_ variables here if they are used elsewhere in this module
-    // For example:
-    // readonly VITE_SOME_OTHER_VAR: string;
-  }
-}
+import type { InitialReportData, CourseRequirements, WhatIfScenario, UniversityCourse } from '../types';
 
 // System instruction remains global as it's consistent across calls
 const systemInstruction = `You are an expert UK university admissions and careers advisor for GCSE students. Your advice must be inspirational, accurate, and strictly based on authoritative sources like the Russell Group's 'Informed Choices' guide, UCAS, and official UK graduate earnings data (HESA/LEO). Do not hallucinate course names or university details. All university courses must be from one of the 24 Russell Group universities. Format your entire response as a single, valid JSON object that adheres to the provided schema. Do not include any markdown formatting like \`\`\`json or any text outside of the JSON object.`;
@@ -34,7 +19,7 @@ const initialReportSchema = {
                     },
                     required: ['title', 'description']
                 },
-                futureStory: { type: Type.STRING, description: "An inspirational story connecting the subjects." },
+                futureStory: { type: Type.STRING, description: "An inspirational story connecting the subjects, written in simple English (GCSE-level) and using short paragraphs." },
                 universityCourses: {
                     type: Type.ARRAY,
                     items: {
@@ -65,13 +50,17 @@ const initialReportSchema = {
 
 const commonApiCallWrapper = async <T>(apiCall: (apiKey: string) => Promise<T>): Promise<T> => {
   try {
-    // For Vite client-side applications, environment variables are exposed via import.meta.env
-    // and must be prefixed with VITE_.
-    const apiKey = import.meta.env.VITE_API_KEY;
+    // Removed explicit window.aistudio.hasSelectedApiKey() check and openSelectKey() call.
+    // The application now assumes the API key is provided via process.env.API_KEY.
+
+    // Defensively get API key, respecting guidelines to use process.env.API_KEY
+    const apiKey = (typeof process !== 'undefined' && process.env)
+        ? process.env.API_KEY
+        : undefined;
 
     // Throw an error if API key is still not available after check, before API call
     if (!apiKey) {
-      // This specific error message will be caught in App.tsx to prompt for API key setup
+      // This specific error message will be caught in App.tsx to prompt API key selection fallback
       throw new Error("Requested entity was not found."); 
     }
     
@@ -91,7 +80,7 @@ export const generateInitialReport = async (subjects: string[]): Promise<Initial
     const model = 'gemini-2.5-flash';
     const prompt = `For the A-level subject combination ${subjects.join(', ')}, provide the following information:
       1. Career Persona: A creative, aspirational persona title (e.g., 'The Creative Engineer') and a short description.
-      2. Future Story: An inspirational story (2 paragraphs) connecting these subjects.
+      2. Future Story: An inspirational story (2-3 short paragraphs) connecting these subjects. Write in simple, clear English suitable for a 15-year-old (GCSE level).
       3. University Courses: A list of 5 relevant degree courses at Russell Group universities (4 popular, 1 less obvious).
       4. Popular Careers: A list of 3-5 typical careers with brief descriptions.
       5. Earning Potential: A summary of likely earnings 2 years after graduation, based on HESA/LEO data.
@@ -111,6 +100,7 @@ const courseRequirementsSchema = {
     type: Type.OBJECT,
     properties: {
         requirements: { type: Type.STRING, description: "Typical A-level grade requirements, e.g., A*AA or ABB." },
+        subjectRequirements: { type: Type.STRING, description: "A summary of any specific A-level subjects required or preferred for the course. E.g., 'Mathematics A-level is required.'" },
         link: { type: Type.STRING, description: "The direct URL to the official course page on the university's website." },
     },
     required: ['requirements', 'link']
@@ -121,7 +111,7 @@ export const getCourseRequirements = async (courseName: string, universityName: 
     // Create new GoogleGenAI instance right before making an API call to ensure it always uses the most up-to-date API key.
     const ai = new GoogleGenAI({ apiKey });
     const model = 'gemini-2.5-flash';
-    const prompt = `What are the typical A-level grade requirements for the course "${courseName}" at "${universityName}"? Provide the requirements and a direct link to the official course page.`;
+    const prompt = `What are the standard A-level grade requirements for the course "${courseName}" at "${universityName}"? Focus only on the standard offer. Also, explicitly list any specific A-level subjects that are required or preferred. Provide the requirements, a list of required subjects, and a direct link to the official course page.`;
     
     const response = await ai.models.generateContent({
         model, contents: prompt, config: { systemInstruction, responseMimeType: "application/json", responseSchema: courseRequirementsSchema, temperature: 0.2, },
@@ -137,7 +127,7 @@ const whatIfScenarioSchema = {
     properties: {
         substitutedSubject: { type: Type.STRING },
         newCombination: { type: Type.ARRAY, items: { type: Type.STRING } },
-        scenarioStory: { type: Type.STRING, description: "A brief, inspirational story (1-2 paragraphs) for the new combination." }
+        scenarioStory: { type: Type.STRING, description: "A brief, inspirational story (1-2 short paragraphs) for the new combination, written in simple English (GCSE-level)." }
     },
     required: ['substitutedSubject', 'newCombination', 'scenarioStory']
 };
@@ -149,7 +139,8 @@ export const generateWhatIfScenario = async (subjects: string[], subjectToReplac
     const model = 'gemini-2.5-flash';
     const newCombination = subjects.map(s => s === subjectToReplace ? newSubject : s);
     const prompt = `Generate a "What If" scenario. The student's original A-level subjects were ${subjects.join(', ')}. They are replacing "${subjectToReplace}" with "${newSubject}".
-    Describe the new opportunities and pathways this new combination of ${newCombination.join(', ')} opens up in a brief, inspirational story.
+    Describe the new opportunities and pathways this new combination of ${newCombination.join(', ')} opens up.
+    Write a brief, inspirational story (2 short paragraphs) in simple, clear English suitable for a 15-year-old (GCSE level).
     The 'substitutedSubject' in the JSON response must be '${subjectToReplace}'.`;
 
     const response = await ai.models.generateContent({
@@ -158,5 +149,46 @@ export const generateWhatIfScenario = async (subjects: string[], subjectToReplac
 
     const jsonText = response.text.trim();
     return JSON.parse(jsonText);
+  });
+};
+
+const universityCoursesListSchema = {
+    type: Type.ARRAY,
+    items: {
+        type: Type.OBJECT,
+        properties: {
+            name: { type: Type.STRING },
+            university: { type: Type.STRING },
+        },
+        required: ['name', 'university']
+    }
+};
+
+export const getUniversitySpecificCourses = async (subjects: string[], university: string): Promise<UniversityCourse[]> => {
+  return commonApiCallWrapper(async (apiKey: string) => {
+    const ai = new GoogleGenAI({ apiKey });
+    const model = 'gemini-2.5-flash';
+    const prompt = `For a student with A-levels in ${subjects.join(', ')}, list up to 5 relevant undergraduate degree courses offered at ${university}. The university name in each returned object must be exactly "${university}".`;
+    
+    const response = await ai.models.generateContent({
+      model,
+      contents: prompt,
+      config: {
+        systemInstruction,
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            courses: universityCoursesListSchema
+          },
+          required: ['courses']
+        },
+        temperature: 0.5,
+      },
+    });
+
+    const jsonText = response.text.trim();
+    const parsedData = JSON.parse(jsonText);
+    return parsedData.courses || [];
   });
 };

@@ -47,6 +47,7 @@ export interface InitialReportData {
 
 export interface CourseRequirements {
   requirements: string;
+  subjectRequirements?: string;
   link: string;
 }
 
