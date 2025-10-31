@@ -2,6 +2,14 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { InitialReportData, CourseRequirements, WhatIfScenario, UniversityCourse } from '../types';
 
+// Revert to VITE_API_KEY for Vercel/Vite environment as requested.
+const apiKey = import.meta.env.VITE_API_KEY;
+if (!apiKey) {
+  throw new Error("VITE_API_KEY environment variable not set. Please ensure it is configured in your environment.");
+}
+const ai = new GoogleGenAI({ apiKey });
+
+
 // System instruction remains global as it's consistent across calls
 const systemInstruction = `You are an expert UK university admissions and careers advisor for GCSE students. Your advice must be inspirational, accurate, and strictly based on authoritative sources like the Russell Group's 'Informed Choices' guide, UCAS, and official UK graduate earnings data (HESA/LEO). Do not hallucinate course names or university details. All university courses must be from one of the 24 Russell Group universities. Format your entire response as a single, valid JSON object that adheres to the provided schema. Do not include any markdown formatting like \`\`\`json or any text outside of the JSON object.`;
 
@@ -48,35 +56,8 @@ const initialReportSchema = {
     required: ['section2Data', 'skippableSubjects']
 };
 
-const commonApiCallWrapper = async <T>(apiCall: (apiKey: string) => Promise<T>): Promise<T> => {
-  try {
-    // Removed explicit window.aistudio.hasSelectedApiKey() check and openSelectKey() call.
-    // The application now assumes the API key is provided via process.env.API_KEY.
-
-    // Defensively get API key, respecting guidelines to use process.env.API_KEY
-    const apiKey = (typeof process !== 'undefined' && process.env)
-        ? process.env.API_KEY
-        : undefined;
-
-    // Throw an error if API key is still not available after check, before API call
-    if (!apiKey) {
-      // This specific error message will be caught in App.tsx to prompt API key selection fallback
-      throw new Error("Requested entity was not found."); 
-    }
-    
-    // Pass apiKey to the apiCall function
-    return await apiCall(apiKey);
-  } catch (error: any) {
-    console.error("Gemini API call error:", error);
-    // Re-throw the error for App.tsx to handle, including specific "Requested entity was not found." for API key reset
-    throw error;
-  }
-};
 
 export const generateInitialReport = async (subjects: string[]): Promise<InitialReportData> => {
-  return commonApiCallWrapper(async (apiKey: string) => {
-    // Create new GoogleGenAI instance right before making an API call to ensure it always uses the most up-to-date API key.
-    const ai = new GoogleGenAI({ apiKey }); 
     const model = 'gemini-2.5-flash';
     const prompt = `For the A-level subject combination ${subjects.join(', ')}, provide the following information:
       1. Career Persona: A creative, aspirational persona title (e.g., 'The Creative Engineer') and a short description.
@@ -92,7 +73,6 @@ export const generateInitialReport = async (subjects: string[]): Promise<Initial
 
     const jsonText = response.text.trim();
     return JSON.parse(jsonText);
-  });
 };
 
 
@@ -107,9 +87,6 @@ const courseRequirementsSchema = {
 };
 
 export const getCourseRequirements = async (courseName: string, universityName: string): Promise<CourseRequirements> => {
-  return commonApiCallWrapper(async (apiKey: string) => { 
-    // Create new GoogleGenAI instance right before making an API call to ensure it always uses the most up-to-date API key.
-    const ai = new GoogleGenAI({ apiKey });
     const model = 'gemini-2.5-flash';
     const prompt = `What are the standard A-level grade requirements for the course "${courseName}" at "${universityName}"? Focus only on the standard offer. Also, explicitly list any specific A-level subjects that are required or preferred. Provide the requirements, a list of required subjects, and a direct link to the official course page.`;
     
@@ -119,7 +96,6 @@ export const getCourseRequirements = async (courseName: string, universityName: 
 
     const jsonText = response.text.trim();
     return JSON.parse(jsonText);
-  });
 };
 
 const whatIfScenarioSchema = {
@@ -133,9 +109,6 @@ const whatIfScenarioSchema = {
 };
 
 export const generateWhatIfScenario = async (subjects: string[], subjectToReplace: string, newSubject: string): Promise<WhatIfScenario> => {
-  return commonApiCallWrapper(async (apiKey: string) => { 
-    // Create new GoogleGenAI instance right before making an API call to ensure it always uses the most up-to-date API key.
-    const ai = new GoogleGenAI({ apiKey });
     const model = 'gemini-2.5-flash';
     const newCombination = subjects.map(s => s === subjectToReplace ? newSubject : s);
     const prompt = `Generate a "What If" scenario. The student's original A-level subjects were ${subjects.join(', ')}. They are replacing "${subjectToReplace}" with "${newSubject}".
@@ -149,7 +122,6 @@ export const generateWhatIfScenario = async (subjects: string[], subjectToReplac
 
     const jsonText = response.text.trim();
     return JSON.parse(jsonText);
-  });
 };
 
 const universityCoursesListSchema = {
@@ -165,8 +137,6 @@ const universityCoursesListSchema = {
 };
 
 export const getUniversitySpecificCourses = async (subjects: string[], university: string): Promise<UniversityCourse[]> => {
-  return commonApiCallWrapper(async (apiKey: string) => {
-    const ai = new GoogleGenAI({ apiKey });
     const model = 'gemini-2.5-flash';
     const prompt = `For a student with A-levels in ${subjects.join(', ')}, list up to 5 relevant undergraduate degree courses offered at ${university}. The university name in each returned object must be exactly "${university}".`;
     
@@ -190,5 +160,4 @@ export const getUniversitySpecificCourses = async (subjects: string[], universit
     const jsonText = response.text.trim();
     const parsedData = JSON.parse(jsonText);
     return parsedData.courses || [];
-  });
 };
