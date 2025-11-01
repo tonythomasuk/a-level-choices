@@ -55,9 +55,8 @@ const App: React.FC = () => {
       setInitialReportData(data);
     } catch (e: any) {
       console.error(e);
-      // Fix: Update error message to refer to VITE_API_KEY, aligning with the change in geminiService.ts.
-               setError('Your API key might be invalid or has issues. Please ensure it is correctly set as an environment variable (VITE_API_KEY on Vercel) and try again.');
-         // Removed setHasApiKeySelected(false) as it no longer serves a purpose with the API key selection UI removed.
+      // Fix: Update error message to refer to API_KEY, aligning with the change in geminiService.ts.
+      setError('An error occurred. Please ensure your API_KEY is configured correctly in your environment variables and try again.');
     } finally {
       setIsLoading(false);
     }
