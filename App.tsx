@@ -1,5 +1,6 @@
+
+
 import React, { useState, useEffect, useCallback } from 'react';
-import { SpeedInsights } from '@vercel/speed-insights/react';
 import Header from './components/Header';
 import SubjectInputs from './components/SubjectInputs';
 import LoadingIndicator from './components/LoadingIndicator';
@@ -75,25 +76,4 @@ const App: React.FC = () => {
         <Header />
         
         <main>
-          <SubjectInputs subjects={subjects} setSubjects={setSubjects} onGenerate={() => handleGenerateFutures()} disabled={isLoading} />
-          
-          {error && (
-            <div className="my-4 p-4 bg-red-100 text-red-800 border border-red-300 rounded-lg text-center" role="alert">
-              <p className="font-bold">An Error Occurred</p>
-              <p>{error}</p>
-            </div>
-          )}
-
-          {isLoading && <LoadingIndicator message={loadingMessage} />}
-
-          {initialReportData && !isLoading && <ResultsContainer initialReportData={initialReportData} subjects={subjects} onRerun={handleRerun} />}
-        </main>
-        
-        <Footer subjects={subjects} initialReportData={initialReportData} />
-      </div>
-      <SpeedInsights />
-    </div>
-  );
-};
-
-export default App;
+          <SubjectInputs subjects={subjects} setSubjects={setSubjects} onGenerate={() => handleGenerateFutures()} disabled={
