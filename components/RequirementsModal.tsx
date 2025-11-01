@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import type { UniversityCourse, CourseRequirements } from '../types';
 import { getCourseRequirements } from '../services/geminiService';
@@ -64,19 +63,9 @@ const RequirementsModal: React.FC<RequirementsModalProps> = ({ course, onClose }
                         </div>
                     )}
                     {requirements && (
-                        <div className="animate-fade-in space-y-6">
-                            <div>
-                                <p className="text-gray-600 font-semibold mb-2">Standard A-Level Offer:</p>
-                                <p className="text-3xl font-extrabold text-brand-primary bg-gray-50 p-4 rounded-lg text-center">{requirements.requirements}</p>
-                            </div>
-                            
-                            {requirements.subjectRequirements && (
-                                <div>
-                                    <p className="text-gray-600 font-semibold mb-2">Subject Requirements:</p>
-                                    <p className="text-base text-gray-800 bg-blue-50 border-l-4 border-blue-400 p-4 rounded-r-lg">{requirements.subjectRequirements}</p>
-                                </div>
-                            )}
-
+                        <div className="animate-fade-in">
+                            <p className="text-gray-600 font-semibold mb-2">Typical A-Level Offer:</p>
+                            <p className="text-3xl font-extrabold text-brand-primary mb-6 bg-gray-50 p-4 rounded-lg text-center">{requirements.requirements}</p>
                             <a 
                                 href={requirements.link} 
                                 target="_blank" 

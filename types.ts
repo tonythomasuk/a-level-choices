@@ -1,5 +1,3 @@
-
-
 export interface UniversityCourse {
   name: string;
   university: string;
@@ -47,9 +45,5 @@ export interface InitialReportData {
 
 export interface CourseRequirements {
   requirements: string;
-  subjectRequirements?: string;
   link: string;
 }
-
-// Removed the AIStudio interface and global Window declaration for aistudio.
-// The application no longer uses window.aistudio for API key management.
