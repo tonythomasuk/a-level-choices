@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { SpeedInsights } from "@vercel/speed-insights/react";
+import { SpeedInsights } from '@vercel/speed-insights/react';
 import Header from './components/Header';
 import SubjectInputs from './components/SubjectInputs';
 import LoadingIndicator from './components/LoadingIndicator';
