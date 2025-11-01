@@ -1,5 +1,3 @@
-
-
 import React, { useState, useEffect, useCallback } from 'react';
 import Header from './components/Header';
 import SubjectInputs from './components/SubjectInputs';
@@ -17,6 +15,7 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [loadingMessage, setLoadingMessage] = useState(LOADING_MESSAGES[0]);
   const [error, setError] = useState<string | null>(null);
+  const [hasApiKeySelected, setHasApiKeySelected] = useState(true);
 
   useEffect(() => {
     const shuffled = [...A_LEVEL_SUBJECTS].sort(() => 0.5 - Math.random());
@@ -56,8 +55,12 @@ const App: React.FC = () => {
       setInitialReportData(data);
     } catch (e: any) {
       console.error(e);
-      // Fix: Update error message to refer to API_KEY, aligning with the change in geminiService.ts.
-      setError('An error occurred. Please ensure your API_KEY is configured correctly in your environment variables and try again.');
+      if (e && e.message && typeof e.message === 'string' && e.message.toLowerCase().includes("requested entity was not found.")) {
+         setError('Your API key might be invalid or has issues. Please ensure it is correctly set as an environment variable (API_KEY) and try again.');
+         setHasApiKeySelected(false);
+      } else {
+        setError('An error occurred while generating your results. Please try again. If the issue persists, check your browser console for details.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -76,4 +79,30 @@ const App: React.FC = () => {
         <Header />
         
         <main>
-          <SubjectInputs subjects={subjects} setSubjects={setSubjects} onGenerate={() => handleGenerateFutures()} disabled={
+          <SubjectInputs subjects={subjects} setSubjects={setSubjects} onGenerate={() => handleGenerateFutures()} disabled={isLoading} />
+          
+          {error && (
+            <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative my-4 shadow-sm" role="alert">
+              <strong className="font-bold">Oops! </strong>
+              <span className="block sm:inline">{error}</span>
+            </div>
+          )}
+
+          {isLoading && <LoadingIndicator message={loadingMessage} />}
+          
+          {initialReportData && (
+            <ResultsContainer 
+              initialReportData={initialReportData}
+              subjects={subjects.filter(s => s.trim() !== '')}
+              onRerun={handleRerun}
+            />
+          )}
+        </main>
+        
+        <Footer initialReportData={initialReportData} subjects={subjects} />
+      </div>
+    </div>
+  );
+};
+
+export default App;
