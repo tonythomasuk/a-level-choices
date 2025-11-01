@@ -55,9 +55,9 @@ const App: React.FC = () => {
       setInitialReportData(data);
     } catch (e: any) {
       console.error(e);
-      // Fix: Update error message to refer to VITE_API_KEY, aligning with the change in geminiService.ts.
-               setError('Your API key might be invalid or has issues. Please ensure it is correctly set as an environment variable (VITE_API_KEY on Vercel) and try again.');
-         // Removed setHasApiKeySelected(false) as it no longer serves a purpose with the API key selection UI removed.
+      // Set a user-friendly error message that hints at a missing or invalid API key.
+      // This message is generic enough for both Vercel and Canvas/AIStudio environments.
+      setError('An error occurred while generating your report. This might be due to a missing or invalid API key. Please ensure it is configured correctly for your environment and try again.');
     } finally {
       setIsLoading(false);
     }
