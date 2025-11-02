@@ -1,4 +1,3 @@
-
 import React, { useState, useCallback, useEffect, useMemo } from 'react';
 import { Header } from './components/Header';
 import { SubjectSelector } from './components/SubjectSelector';
@@ -11,10 +10,8 @@ import { WhatIf } from './components/WhatIf';
 import { SkipSubject } from './components/SkipSubject';
 import { Footer } from './components/Footer';
 import { generateInitialAnalysis, generateUniversityCourses, generateSkipInfo } from './services/geminiService';
-import type { AnalysisResult, UniversityCourse, SavedState, SkipSubjectInfo } from './types';
+import type { AnalysisResult, UniversityCourse, SkipSubjectInfo } from './types';
 import { A_LEVEL_SUBJECTS } from './constants';
-
-const SAVE_KEY = 'alevel-explorer-save';
 
 const SelectedSubjectsBanner: React.FC<{ subjects: string[] }> = ({ subjects }) => (
     <div className="mb-6 p-4 bg-slate-100 rounded-lg border border-slate-200 print:hidden">
@@ -41,8 +38,6 @@ const App: React.FC = () => {
         section4: false,
     });
     const [cachedCourses, setCachedCourses] = useState<Record<string, UniversityCourse[]>>({});
-    const [saveDataExists, setSaveDataExists] = useState(false);
-    const [notification, setNotification] = useState<string | null>(null);
 
     const initialSubjects = useMemo(() => {
         const shuffled = [...A_LEVEL_SUBJECTS].sort(() => 0.5 - Math.random());
@@ -51,9 +46,6 @@ const App: React.FC = () => {
 
     useEffect(() => {
         setSubjects(initialSubjects);
-        if (localStorage.getItem(SAVE_KEY)) {
-            setSaveDataExists(true);
-        }
     }, [initialSubjects]);
 
     const handleExplore = useCallback(async (selectedSubjects: [string, string, string, string]) => {
@@ -103,65 +95,12 @@ const App: React.FC = () => {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     };
 
-    const handleSave = () => {
-        if (!analysisResult) return;
-
-        const stateToSave: SavedState = {
-            subjects,
-            analysisResult,
-            visibleSections,
-            cachedCourses,
-            skipInfo,
-        };
-
-        localStorage.setItem(SAVE_KEY, JSON.stringify(stateToSave));
-        setSaveDataExists(true);
-        setNotification('Analysis saved successfully!');
-        setTimeout(() => setNotification(null), 3000);
-    };
-
-    const handleLoad = () => {
-        const savedDataString = localStorage.getItem(SAVE_KEY);
-        if (savedDataString) {
-            try {
-                const savedState: SavedState = JSON.parse(savedDataString);
-                setSubjects(savedState.subjects);
-                setAnalysisResult(savedState.analysisResult);
-                setVisibleSections(savedState.visibleSections);
-                setCachedCourses(savedState.cachedCourses);
-                setSkipInfo(savedState.skipInfo ?? null);
-                setError(null);
-                setLoading(false);
-                setNotification('Analysis loaded successfully!');
-                setTimeout(() => setNotification(null), 3000);
-                window.scrollTo({ top: 0, behavior: 'smooth' });
-            } catch (e) {
-                console.error("Failed to load saved state:", e);
-                setNotification('Failed to load analysis. The data may be corrupt.');
-                setTimeout(() => setNotification(null), 3000);
-                localStorage.removeItem(SAVE_KEY);
-                setSaveDataExists(false);
-            }
-        }
-    };
-
     return (
         <>
             <div className="min-h-screen font-sans text-slate-800 antialiased">
                 <main className="container mx-auto max-w-4xl p-4 md:p-8">
-                    <Header 
-                        onSave={handleSave}
-                        onLoad={handleLoad}
-                        isSaveDisabled={!analysisResult || loading}
-                        isLoadDisabled={!saveDataExists}
-                    />
+                    <Header />
                     
-                    {notification && (
-                        <div className="fixed top-5 right-5 bg-indigo-600 text-white px-4 py-2 rounded-lg shadow-lg animate-fade-in-out z-50">
-                            {notification}
-                        </div>
-                    )}
-
                     <Section>
                         <SubjectSelector
                             initialSubjects={subjects}

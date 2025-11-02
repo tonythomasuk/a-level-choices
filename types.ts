@@ -1,4 +1,3 @@
-
 export interface UniversityCourse {
     courseName: string;
     universityName: string;
@@ -47,16 +46,4 @@ export interface SkipSubjectInfo {
     subject: string;
     canSkip: boolean;
     details: string;
-}
-
-export interface SavedState {
-    subjects: [string, string, string, string];
-    analysisResult: AnalysisResult | null;
-    visibleSections: {
-        section2: boolean;
-        section3: boolean;
-        section4: boolean;
-    };
-    cachedCourses: Record<string, UniversityCourse[]>;
-    skipInfo: SkipSubjectInfo[] | null;
 }
