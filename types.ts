@@ -1,3 +1,4 @@
+
 export interface UniversityCourse {
     courseName: string;
     universityName: string;
@@ -11,6 +12,7 @@ export interface UniversityCourse {
 export interface PopularCareer {
     careerName: string;
     summary: string;
+    degreePathways: string[];
     companies: string[];
 }
 
@@ -56,4 +58,5 @@ export interface SavedState {
         section4: boolean;
     };
     cachedCourses: Record<string, UniversityCourse[]>;
+    skipInfo: SkipSubjectInfo[] | null;
 }

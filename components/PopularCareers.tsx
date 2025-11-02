@@ -27,7 +27,12 @@ export const PopularCareers: React.FC<PopularCareersProps> = ({ careers, earning
                         <div key={index} className="p-4 border border-slate-200 rounded-lg bg-slate-50/50">
                             <h4 className="font-bold text-lg text-purple-700">{career.careerName}</h4>
                             <p className="mt-1">{career.summary}</p>
-                            <p className="mt-2 text-sm">
+                            {career.degreePathways && career.degreePathways.length > 0 && (
+                                <p className="mt-2 text-xs font-semibold text-indigo-700 bg-indigo-100 inline-block px-2 py-1 rounded-full">
+                                    Pathway: {career.degreePathways.join(' / ')}
+                                </p>
+                            )}
+                            <p className="mt-3 text-sm">
                                 <strong>Example Employers:</strong> {career.companies.join(', ')}
                             </p>
                         </div>

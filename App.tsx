@@ -10,17 +10,31 @@ import { PopularCareers } from './components/PopularCareers';
 import { WhatIf } from './components/WhatIf';
 import { SkipSubject } from './components/SkipSubject';
 import { Footer } from './components/Footer';
-import { generateInitialAnalysis, generateUniversityCourses } from './services/geminiService';
-import type { AnalysisResult, UniversityCourse, SavedState } from './types';
+import { generateInitialAnalysis, generateUniversityCourses, generateSkipInfo } from './services/geminiService';
+import type { AnalysisResult, UniversityCourse, SavedState, SkipSubjectInfo } from './types';
 import { A_LEVEL_SUBJECTS } from './constants';
 
 const SAVE_KEY = 'alevel-explorer-save';
+
+const SelectedSubjectsBanner: React.FC<{ subjects: string[] }> = ({ subjects }) => (
+    <div className="mb-6 p-4 bg-slate-100 rounded-lg border border-slate-200 print:hidden">
+        <p className="text-sm font-medium text-slate-600 mb-2">Analysis based on A-level subjects:</p>
+        <div className="flex flex-wrap gap-2">
+            {subjects.map((subject, index) => (
+                <span key={index} className="px-3 py-1 bg-indigo-100 text-indigo-800 text-sm font-semibold rounded-full">
+                    {subject}
+                </span>
+            ))}
+        </div>
+    </div>
+);
 
 const App: React.FC = () => {
     const [subjects, setSubjects] = useState<[string, string, string, string]>(['', '', '', '']);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
+    const [skipInfo, setSkipInfo] = useState<SkipSubjectInfo[] | null>(null);
     const [visibleSections, setVisibleSections] = useState({
         section2: false,
         section3: false,
@@ -46,6 +60,7 @@ const App: React.FC = () => {
         setLoading(true);
         setError(null);
         setAnalysisResult(null);
+        setSkipInfo(null);
         setCachedCourses({});
         setVisibleSections({ section2: false, section3: false, section4: false });
 
@@ -57,9 +72,10 @@ const App: React.FC = () => {
         }
 
         try {
-            const [baseAnalysis, initialCourses] = await Promise.all([
+            const [baseAnalysis, initialCourses, skipSubjectInfo] = await Promise.all([
                 generateInitialAnalysis(validSubjects),
-                generateUniversityCourses(validSubjects, 'All Universities')
+                generateUniversityCourses(validSubjects, 'All Universities'),
+                generateSkipInfo(validSubjects)
             ]);
 
             const result: AnalysisResult = {
@@ -68,6 +84,7 @@ const App: React.FC = () => {
             };
             
             setAnalysisResult(result);
+            setSkipInfo(skipSubjectInfo);
             setCachedCourses({'All Universities': initialCourses});
             setVisibleSections(prev => ({ ...prev, section2: true }));
         } catch (err) {
@@ -91,7 +108,8 @@ const App: React.FC = () => {
             subjects,
             analysisResult,
             visibleSections,
-            cachedCourses
+            cachedCourses,
+            skipInfo,
         };
 
         localStorage.setItem(SAVE_KEY, JSON.stringify(stateToSave));
@@ -109,6 +127,7 @@ const App: React.FC = () => {
                 setAnalysisResult(savedState.analysisResult);
                 setVisibleSections(savedState.visibleSections);
                 setCachedCourses(savedState.cachedCourses);
+                setSkipInfo(savedState.skipInfo ?? null);
                 setError(null);
                 setLoading(false);
                 setNotification('Analysis loaded successfully!');
@@ -155,10 +174,12 @@ const App: React.FC = () => {
                     {visibleSections.section2 && analysisResult && (
                         <>
                             <Section title="Your Future Story" iconPrompt="a book opening up to a bright path">
+                                <SelectedSubjectsBanner subjects={subjects.filter(s => s)} />
                                 <FutureStory story={analysisResult.futureStory} />
                             </Section>
 
                             <Section title="University Courses" iconPrompt="a university building with a graduation cap">
+                                <SelectedSubjectsBanner subjects={subjects.filter(s => s)} />
                                 <UniversityCourses 
                                     initialCourses={analysisResult.universityCourses}
                                     subjects={subjects.filter(s => s)}
@@ -181,6 +202,7 @@ const App: React.FC = () => {
                     {visibleSections.section3 && analysisResult && (
                          <>
                             <Section title="Popular Careers & Earning Potential" iconPrompt="a briefcase with a rising stock chart">
+                                <SelectedSubjectsBanner subjects={subjects.filter(s => s)} />
                                 <PopularCareers 
                                     careers={analysisResult.popularCareers} 
                                     earningPotential={analysisResult.earningPotential}
@@ -201,10 +223,12 @@ const App: React.FC = () => {
                     {visibleSections.section4 && analysisResult && (
                          <>
                             <Section title="University Entry Flexibility" iconPrompt="a flexible path or a key unlocking a door">
-                                <SkipSubject subjects={subjects.filter(s => s)} />
+                                <SelectedSubjectsBanner subjects={subjects.filter(s => s)} />
+                                <SkipSubject info={skipInfo} />
                             </Section>
 
                             <Section title="What If..." iconPrompt="a crystal ball showing alternate paths">
+                                <SelectedSubjectsBanner subjects={subjects.filter(s => s)} />
                                 <WhatIf 
                                     currentSubjects={subjects.filter(s => s)}
                                     onRerun={handleRerunAnalysis}

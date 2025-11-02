@@ -1,25 +1,9 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { BaseAnalysis, UniversityCourse, SkipSubjectInfo } from '../types';
 
-// Commented out to replace with Vercel flexibility
-//const getApiKey = (): string => {
-//    return process.env.API_KEY as string;
-//};
-
-//Get Application ready to work in a Vercel environment
 const getApiKey = (): string => {
-    // Vercel automatically injects environment variables prefixed with VITE_ into the import.meta.env object.
-    // We check the hostname to determine if the app is running in the Vercel environment.
-    if (window.location.hostname.endsWith('.vercel.app')) {
-        // In a Vercel environment (or during local dev with a .env file),
-        // use the custom key. 'VITE_API_KEY' is a standard convention.
-        return import.meta.env.VITE_API_KEY as string;
-    }
-
-    // In the default environment (e.g., Google's Canvas), use the provided API_KEY.
     return process.env.API_KEY as string;
 };
-//End of newly inserted text
 
 const getAIClient = () => new GoogleGenAI({ apiKey: getApiKey() });
 
@@ -38,15 +22,16 @@ const baseAnalysisSchema = {
         },
         popularCareers: {
             type: Type.ARRAY,
-            description: "A list of up to 5 popular careers for this subject combination.",
+            description: "A list of up to 5 popular careers for this subject combination, explicitly linked to degree pathways.",
             items: {
                 type: Type.OBJECT,
                 properties: {
                     careerName: { type: Type.STRING },
                     summary: { type: Type.STRING, description: "A one-line summary of the career and how the subjects are helpful." },
+                    degreePathways: { type: Type.ARRAY, items: { type: Type.STRING }, description: "The university degree categories that typically lead to this career (e.g., 'STEM Degrees')." },
                     companies: { type: Type.ARRAY, items: { type: Type.STRING }, description: "1-2 example UK companies from different sectors that hire for this role." },
                 },
-                required: ["careerName", "summary", "companies"]
+                required: ["careerName", "summary", "degreePathways", "companies"]
             },
         },
         earningPotential: {
@@ -81,7 +66,7 @@ export const generateInitialAnalysis = async (subjects: string[]): Promise<BaseA
         You are an expert UK university admissions and careers advisor for GCSE students (age 14-15).
         Analyze the A-level subject combination: ${subjectCombination}.
         Your response must be grounded in official, authoritative UK sources like the Russell Group's 'Informed Choices' guide, UCAS, HESA, and OfQual data.
-        Your analysis should first consider the types of university degrees these subjects typically lead to. Based on those degree pathways, then identify popular career paths and earning potentials.
+        CRITICAL INSTRUCTION: Your analysis must first identify the most common university degree categories these subjects lead to (e.g., 'STEM & Engineering', 'Humanities & Social Sciences', 'Creative Arts', 'Business & Economics'). Then, for each career you suggest, you MUST populate the 'degreePathways' field with the relevant categories. This creates a clear pathway from A-levels to degree to career.
         Provide a detailed, inspirational, and accurate analysis.
         Correct any subject name typos to their standard A-level names.
         Return the data in the specified JSON schema. Ensure all markdown fields are formatted for readability with paragraphs, bold text for emphasis on skills and figures, and lists where appropriate.
@@ -114,21 +99,15 @@ export const generateUniversityCourses = async (subjects: string[], university: 
         : `Provide up to 5 courses specifically from ${university}.`;
 
     const prompt = `
-        You are an expert UK university admissions advisor.
-        For the A-level subject combination "${subjectCombination}", find suitable undergraduate degree courses.
+        You are an expert UK university admissions advisor, acting as a strict data filter.
+        Your task is to find suitable undergraduate degree courses for a student with the A-level subjects: "${subjectCombination}".
         ${universityFilter}
-        Verify all information using the official university website and UCAS. Ensure all URLs are valid and direct to the course page.
-        CRITICAL RULE: For a course to be included, its 'requiredSubjects' list must ONLY contain subjects from the student's combination of "${subjectCombination}". If a course requires an A-level that the student has not chosen, it MUST be excluded. 'recommendedSubjects' can be outside this list.
-        Return the data as a JSON array matching this schema:
-        [{
-            "courseName": "string",
-            "universityName": "string",
-            "url": "string (direct link to course page)",
-            "typicalOffer": "string",
-            "requiredSubjects": ["string"],
-            "recommendedSubjects": ["string"],
-            "gcseRequirements": "string"
-        }]
+        You must follow these rules without exception:
+        1.  **Verification:** All information MUST be verified against the official university website and UCAS for the upcoming academic year. All URLs must be valid and deep-link directly to the course information page.
+        2.  **Strict Subject Requirement:** A course is ONLY a valid match if its list of *required* A-level subjects is a subset of the student's subjects ("${subjectCombination}"). For example, if a student has (Maths, Physics, Chemistry) and a course requires (Maths, Physics), it is a match. If a course requires (Maths, Further Maths), it is NOT a match.
+        3.  **No Extraneous Requirements:** If a course requires any A-level subject not in the student's list, it MUST be excluded from the results.
+        4.  **Recommended Subjects:** 'recommendedSubjects' can include subjects outside the student's list.
+        Return the data as a JSON array matching the specified schema.
     `;
     
      const courseSchema = {
