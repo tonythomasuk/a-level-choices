@@ -1,117 +1,233 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import type { InitialReportData, CourseRequirements, WhatIfScenario } from '../types';
+import type { BaseAnalysis, UniversityCourse, SkipSubjectInfo } from '../types';
 
-// IMPORTANT: This check is crucial for deployment environments like Vercel.
-if (!process.env.API_KEY) {
-    console.error("API_KEY environment variable not set!");
-}
+// Commented out to replace with Vercel flexibility
+//const getApiKey = (): string => {
+//    return process.env.API_KEY as string;
+//};
 
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY! });
-const model = 'gemini-2.5-flash';
+//Get Application ready to work in a Vercel environment
+const getApiKey = (): string => {
+    // Vercel automatically injects environment variables prefixed with VITE_ into the import.meta.env object.
+    // We check the hostname to determine if the app is running in the Vercel environment.
+    if (window.location.hostname.endsWith('.vercel.app')) {
+        // In a Vercel environment (or during local dev with a .env file),
+        // use the custom key. 'VITE_API_KEY' is a standard convention.
+        return import.meta.env.VITE_API_KEY as string;
+    }
 
-const systemInstruction = `You are an expert UK university admissions and careers advisor for GCSE students. Your advice must be inspirational, accurate, and strictly based on authoritative sources like the Russell Group's 'Informed Choices' guide, UCAS, and official UK graduate earnings data (HESA/LEO). Do not hallucinate course names or university details. All university courses must be from one of the 24 Russell Group universities. Format your entire response as a single, valid JSON object that adheres to the provided schema. Do not include any markdown formatting like \`\`\`json or any text outside of the JSON object.`;
+    // In the default environment (e.g., Google's Canvas), use the provided API_KEY.
+    return process.env.API_KEY as string;
+};
+//End of newly inserted text
 
-const initialReportSchema = {
+const getAIClient = () => new GoogleGenAI({ apiKey: getApiKey() });
+
+const baseAnalysisSchema = {
     type: Type.OBJECT,
     properties: {
-        section2Data: {
+        futureStory: {
+            type: Type.OBJECT,
+            description: "A structured, inspirational story about the subject combination.",
+            properties: {
+                introduction: { type: Type.STRING, description: "A compelling opening paragraph (markdown formatted)." },
+                body: { type: Type.STRING, description: "2-3 paragraphs (markdown formatted) detailing skills, real-world application, and synergy between subjects. Use bold for key skills." },
+                conclusion: { type: Type.STRING, description: "A powerful concluding paragraph (markdown formatted) to inspire the student." }
+            },
+            required: ["introduction", "body", "conclusion"]
+        },
+        popularCareers: {
+            type: Type.ARRAY,
+            description: "A list of up to 5 popular careers for this subject combination.",
+            items: {
+                type: Type.OBJECT,
+                properties: {
+                    careerName: { type: Type.STRING },
+                    summary: { type: Type.STRING, description: "A one-line summary of the career and how the subjects are helpful." },
+                    companies: { type: Type.ARRAY, items: { type: Type.STRING }, description: "1-2 example UK companies from different sectors that hire for this role." },
+                },
+                required: ["careerName", "summary", "companies"]
+            },
+        },
+        earningPotential: {
+            type: Type.OBJECT,
+            description: "A structured summary of earning potential based on official UK data.",
+            properties: {
+                summary: { type: Type.STRING, description: "An introductory paragraph (markdown formatted) summarizing the overall earning potential." },
+                careerSpecifics: {
+                    type: Type.ARRAY,
+                    description: "A list of earning potentials for specific careers.",
+                    items: {
+                        type: Type.OBJECT,
+                        properties: {
+                            careerName: { type: Type.STRING },
+                            earningInfo: { type: Type.STRING, description: "A sentence (markdown formatted) with quantitative data (e.g., salary ranges) for this career 2 years post-graduation." }
+                        },
+                        required: ["careerName", "earningInfo"]
+                    }
+                },
+                outlook: { type: Type.STRING, description: "A concluding sentence (markdown formatted) on the financial outlook." }
+            },
+            required: ["summary", "careerSpecifics", "outlook"]
+        },
+    },
+    required: ["futureStory", "popularCareers", "earningPotential"]
+};
+
+export const generateInitialAnalysis = async (subjects: string[]): Promise<BaseAnalysis> => {
+    const ai = getAIClient();
+    const subjectCombination = subjects.join(', ');
+    const prompt = `
+        You are an expert UK university admissions and careers advisor for GCSE students (age 14-15).
+        Analyze the A-level subject combination: ${subjectCombination}.
+        Your response must be grounded in official, authoritative UK sources like the Russell Group's 'Informed Choices' guide, UCAS, HESA, and OfQual data.
+        Provide a detailed, inspirational, and accurate analysis.
+        Correct any subject name typos to their standard A-level names.
+        Return the data in the specified JSON schema. Ensure all markdown fields are formatted for readability with paragraphs, bold text for emphasis on skills and figures, and lists where appropriate.
+    `;
+
+    const response = await ai.models.generateContent({
+        model: "gemini-2.5-pro",
+        contents: prompt,
+        config: {
+            responseMimeType: "application/json",
+            responseSchema: baseAnalysisSchema,
+            thinkingConfig: { thinkingBudget: 32768 }
+        },
+    });
+
+    const jsonText = response.text.trim();
+    try {
+        return JSON.parse(jsonText) as BaseAnalysis;
+    } catch (e) {
+        console.error("Failed to parse JSON response:", jsonText);
+        throw new Error("The AI returned an invalid response format.");
+    }
+};
+
+export const generateUniversityCourses = async (subjects: string[], university: string = 'All Universities'): Promise<UniversityCourse[]> => {
+    const ai = getAIClient();
+    const subjectCombination = subjects.join(', ');
+    const scope = university === 'All Universities'
+        ? "across a variety of UK Russell Group universities. Provide a representative sample of 5 courses."
+        : `specifically at ${university}. Provide up to 5 courses.`;
+
+    const prompt = `
+        You are an expert UK university admissions advisor.
+        For the A-level subject combination "${subjectCombination}", find suitable undergraduate degree courses ${scope}
+        Verify all information using the official university website and UCAS. Ensure all URLs are valid and direct to the course page.
+        Return the data as a JSON array matching this schema:
+        [{
+            "courseName": "string",
+            "universityName": "string",
+            "url": "string (direct link to course page)",
+            "typicalOffer": "string",
+            "requiredSubjects": ["string"],
+            "recommendedSubjects": ["string"],
+            "gcseRequirements": "string"
+        }]
+    `;
+    
+     const courseSchema = {
+        type: Type.ARRAY,
+        items: {
             type: Type.OBJECT,
             properties: {
-                careerPersona: {
-                    type: Type.OBJECT,
-                    properties: {
-                        title: { type: Type.STRING, description: "A creative, aspirational persona title like 'The Creative Engineer' or 'The Data-Driven Historian'." },
-                        description: { type: Type.STRING, description: "A short, engaging one-paragraph description of the persona's strengths." },
-                    },
-                    required: ['title', 'description']
-                },
-                futureStory: { type: Type.STRING, description: "An inspirational story connecting the subjects." },
-                universityCourses: {
-                    type: Type.ARRAY,
-                    items: {
-                        type: Type.OBJECT, properties: { name: { type: Type.STRING }, university: { type: Type.STRING }, }, required: ['name', 'university'],
-                    },
-                },
-                popularCareers: {
-                    type: Type.ARRAY,
-                    items: {
-                        type: Type.OBJECT, properties: { name: { type: Type.STRING }, description: { type: Type.STRING }, }, required: ['name', 'description'],
-                    },
-                },
-                earningPotential: {
-                    type: Type.OBJECT, properties: { range: { type: Type.STRING, description: "Salary range, e.g., £25,000 - £40,000" }, details: { type: Type.STRING, description: "Details about earning potential." }, }, required: ['range', 'details'],
-                },
+                courseName: { type: Type.STRING },
+                universityName: { type: Type.STRING },
+                url: { type: Type.STRING },
+                typicalOffer: { type: Type.STRING },
+                requiredSubjects: { type: Type.ARRAY, items: { type: Type.STRING } },
+                recommendedSubjects: { type: Type.ARRAY, items: { type: Type.STRING } },
+                gcseRequirements: { type: Type.STRING },
             },
-            required: ['careerPersona', 'futureStory', 'universityCourses', 'popularCareers', 'earningPotential'],
-        },
-        skippableSubjects: {
-            type: Type.ARRAY,
-            items: {
-                type: Type.OBJECT, properties: { subject: { type: Type.STRING }, isSkippable: { type: Type.BOOLEAN }, reason: { type: Type.STRING } }, required: ['subject', 'isSkippable', 'reason']
-            }
+            required: ["courseName", "universityName", "url", "typicalOffer", "requiredSubjects", "recommendedSubjects", "gcseRequirements"]
         }
-    },
-    required: ['section2Data', 'skippableSubjects']
+    };
+
+    const response = await ai.models.generateContent({
+        model: "gemini-2.5-pro",
+        contents: prompt,
+        config: {
+            responseMimeType: "application/json",
+            responseSchema: courseSchema,
+            thinkingConfig: { thinkingBudget: 32768 }
+        },
+    });
+
+    const jsonText = response.text.trim();
+    try {
+        return JSON.parse(jsonText) as UniversityCourse[];
+    } catch (e) {
+        console.error("Failed to parse JSON response for university courses:", jsonText);
+        throw new Error("The AI returned an invalid response format for university courses.");
+    }
+}
+
+
+export const generateWhatIfStory = async (originalSubjects: string[], newCombination: string[]): Promise<string> => {
+    const ai = getAIClient();
+    const prompt = `
+        A GCSE student is considering changing one of their A-level subjects.
+        Original combination: ${originalSubjects.join(', ')}.
+        New combination: ${newCombination.join(', ')}.
+        Write an inspirational "Future Story" (2-3 paragraphs, markdown formatted) for them. Focus on the new possibilities and career paths opened up by this change. Maintain an encouraging and ambitious tone suitable for a 14-15 year old.
+    `;
+
+    const response = await ai.models.generateContent({
+        model: "gemini-2.5-pro",
+        contents: prompt,
+        config: {
+             thinkingConfig: { thinkingBudget: 32768 }
+        }
+    });
+    return response.text;
 };
 
-export const generateInitialReport = async (subjects: string[]): Promise<InitialReportData> => {
-  const prompt = `For the A-level subject combination ${subjects.join(', ')}, provide the following information:
-    1. Career Persona: A creative, aspirational persona title (e.g., 'The Creative Engineer') and a short description.
-    2. Future Story: An inspirational story (2 paragraphs) connecting these subjects.
-    3. University Courses: A list of 5 relevant degree courses at Russell Group universities (4 popular, 1 less obvious).
-    4. Popular Careers: A list of 3-5 typical careers with brief descriptions.
-    5. Earning Potential: A summary of likely earnings 2 years after graduation, based on HESA/LEO data.
-    6. Skippable Subjects: For each of the original subjects (${subjects.join(', ')}), analyze if it can be studied at a Russell Group university without the A-level, providing a boolean and a reason.`;
-  
-  const response = await ai.models.generateContent({
-    model, contents: prompt, config: { systemInstruction, responseMimeType: "application/json", responseSchema: initialReportSchema, temperature: 0.7, },
-  });
 
-  const jsonText = response.text.trim();
-  return JSON.parse(jsonText);
-};
-
-
-const courseRequirementsSchema = {
-    type: Type.OBJECT,
-    properties: {
-        requirements: { type: Type.STRING, description: "Typical A-level grade requirements, e.g., A*AA or ABB." },
-        link: { type: Type.STRING, description: "The direct URL to the official course page on the university's website." },
-    },
-    required: ['requirements', 'link']
-};
-
-export const getCourseRequirements = async (courseName: string, universityName: string): Promise<CourseRequirements> => {
-    const prompt = `What are the typical A-level grade requirements for the course "${courseName}" at "${universityName}"? Provide the requirements and a direct link to the official course page.`;
+export const generateSkipInfo = async (subjects: string[]): Promise<SkipSubjectInfo[]> => {
+    const ai = getAIClient();
+    const prompt = `
+        For each of the following A-level subjects, analyze whether a student can study a related degree at a top UK (Russell Group) university without having taken the subject at A-level.
+        Subjects: ${subjects.join(', ')}.
+        Rely on official UCAS and university guidance.
+        For each subject, determine if it can be skipped and provide a brief explanation.
+        Return the response as a JSON array with this exact structure:
+        [{"subject": "Subject Name", "canSkip": boolean, "details": "Explanation..."}]
+    `;
     
+    const skipSchema = {
+        type: Type.ARRAY,
+        items: {
+            type: Type.OBJECT,
+            properties: {
+                subject: { type: Type.STRING },
+                canSkip: { type: Type.BOOLEAN },
+                details: { type: Type.STRING }
+            },
+            required: ["subject", "canSkip", "details"]
+        }
+    };
+
     const response = await ai.models.generateContent({
-        model, contents: prompt, config: { systemInstruction, responseMimeType: "application/json", responseSchema: courseRequirementsSchema, temperature: 0.2, },
+        model: 'gemini-2.5-pro',
+        contents: prompt,
+        config: {
+            responseMimeType: 'application/json',
+            responseSchema: skipSchema,
+            thinkingConfig: { thinkingBudget: 32768 }
+        }
     });
 
     const jsonText = response.text.trim();
-    return JSON.parse(jsonText);
-};
-
-const whatIfScenarioSchema = {
-    type: Type.OBJECT,
-    properties: {
-        substitutedSubject: { type: Type.STRING },
-        newCombination: { type: Type.ARRAY, items: { type: Type.STRING } },
-        scenarioStory: { type: Type.STRING, description: "A brief, inspirational story (1-2 paragraphs) for the new combination." }
-    },
-    required: ['substitutedSubject', 'newCombination', 'scenarioStory']
-};
-
-export const generateWhatIfScenario = async (subjects: string[], subjectToReplace: string, newSubject: string): Promise<WhatIfScenario> => {
-    const newCombination = subjects.map(s => s === subjectToReplace ? newSubject : s);
-    const prompt = `Generate a "What If" scenario. The student's original A-level subjects were ${subjects.join(', ')}. They are replacing "${subjectToReplace}" with "${newSubject}".
-    Describe the new opportunities and pathways this new combination of ${newCombination.join(', ')} opens up in a brief, inspirational story.
-    The 'substitutedSubject' in the JSON response must be '${subjectToReplace}'.`;
-
-    const response = await ai.models.generateContent({
-        model, contents: prompt, config: { systemInstruction, responseMimeType: "application/json", responseSchema: whatIfScenarioSchema, temperature: 0.8, },
-    });
-
-    const jsonText = response.text.trim();
-    return JSON.parse(jsonText);
+    try {
+        return JSON.parse(jsonText) as SkipSubjectInfo[];
+    } catch (e) {
+        console.error("Failed to parse JSON response for skip info:", jsonText);
+        return subjects.map(s => ({
+            subject: s,
+            canSkip: false,
+            details: "Could not retrieve information for this subject."
+        }));
+    }
 };

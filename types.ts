@@ -1,49 +1,48 @@
 export interface UniversityCourse {
-  name: string;
-  university: string;
+    courseName: string;
+    universityName: string;
+    url: string;
+    typicalOffer: string;
+    requiredSubjects: string[];
+    recommendedSubjects: string[];
+    gcseRequirements: string;
 }
 
-export interface Career {
-  name:string;
-  description: string;
+export interface PopularCareer {
+    careerName: string;
+    summary: string;
+    companies: string[];
 }
 
-export interface EarningInfo {
-  range: string;
-  details: string;
+export interface FutureStory {
+    introduction: string;
+    body: string;
+    conclusion: string;
 }
 
-export interface CareerPersona {
-  title: string;
-  description: string;
+export interface EarningPotential {
+    summary: string;
+    careerSpecifics: {
+        careerName: string;
+        earningInfo: string;
+    }[];
+    outlook: string;
 }
 
-export interface Section2Data {
-  careerPersona: CareerPersona;
-  futureStory: string;
-  universityCourses: UniversityCourse[];
-  popularCareers: Career[];
-  earningPotential: EarningInfo;
+// Base type for the main analysis (story, careers, earnings)
+export interface BaseAnalysis {
+    futureStory: FutureStory;
+    popularCareers: PopularCareer[];
+    earningPotential: EarningPotential;
 }
 
-export interface WhatIfScenario {
-  substitutedSubject: string;
-  newCombination: string[];
-  scenarioStory: string;
+// Full result type including the university courses
+export interface AnalysisResult extends BaseAnalysis {
+    universityCourses: UniversityCourse[];
 }
 
-export interface SkippableSubjectInfo {
-  subject: string;
-  isSkippable: boolean;
-  reason: string;
-}
-
-export interface InitialReportData {
-  section2Data: Section2Data;
-  skippableSubjects: SkippableSubjectInfo[];
-}
-
-export interface CourseRequirements {
-  requirements: string;
-  link: string;
+export interface SkipSubjectInfo {
+    subject: string;
+    canSkip: boolean;
+    details: string;
 }

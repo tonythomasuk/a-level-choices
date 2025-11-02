@@ -1,5 +1,5 @@
 {
-  "name": "a-level-choices",
+  "name": "a-level-and-beyond:-an-exploration",
   "private": true,
   "version": "0.0.0",
   "type": "module",
@@ -9,9 +9,10 @@
     "preview": "vite preview"
   },
   "dependencies": {
-    "@google/genai": "^1.27.0",
+    "react": "^19.2.0",
     "react-dom": "^19.2.0",
-    "react": "^19.2.0"
+    "marked": "^16.4.1",
+    "@google/genai": "^1.28.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
