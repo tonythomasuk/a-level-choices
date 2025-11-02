@@ -57,6 +57,8 @@ const App: React.FC = () => {
     }, [initialSubjects]);
 
     const handleExplore = useCallback(async (selectedSubjects: [string, string, string, string]) => {
+        setSubjects(selectedSubjects); // Ensure the app's main state is updated immediately.
+        
         setLoading(true);
         setError(null);
         setAnalysisResult(null);
