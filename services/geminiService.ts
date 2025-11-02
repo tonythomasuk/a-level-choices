@@ -81,6 +81,7 @@ export const generateInitialAnalysis = async (subjects: string[]): Promise<BaseA
         You are an expert UK university admissions and careers advisor for GCSE students (age 14-15).
         Analyze the A-level subject combination: ${subjectCombination}.
         Your response must be grounded in official, authoritative UK sources like the Russell Group's 'Informed Choices' guide, UCAS, HESA, and OfQual data.
+        Your analysis should first consider the types of university degrees these subjects typically lead to. Based on those degree pathways, then identify popular career paths and earning potentials.
         Provide a detailed, inspirational, and accurate analysis.
         Correct any subject name typos to their standard A-level names.
         Return the data in the specified JSON schema. Ensure all markdown fields are formatted for readability with paragraphs, bold text for emphasis on skills and figures, and lists where appropriate.
@@ -108,14 +109,16 @@ export const generateInitialAnalysis = async (subjects: string[]): Promise<BaseA
 export const generateUniversityCourses = async (subjects: string[], university: string = 'All Universities'): Promise<UniversityCourse[]> => {
     const ai = getAIClient();
     const subjectCombination = subjects.join(', ');
-    const scope = university === 'All Universities'
-        ? "across a variety of UK Russell Group universities. Provide a representative sample of 5 courses."
-        : `specifically at ${university}. Provide up to 5 courses.`;
+    const universityFilter = university === 'All Universities'
+        ? "Provide a representative sample of 5 courses from a variety of UK Russell Group universities."
+        : `Provide up to 5 courses specifically from ${university}.`;
 
     const prompt = `
         You are an expert UK university admissions advisor.
-        For the A-level subject combination "${subjectCombination}", find suitable undergraduate degree courses ${scope}
+        For the A-level subject combination "${subjectCombination}", find suitable undergraduate degree courses.
+        ${universityFilter}
         Verify all information using the official university website and UCAS. Ensure all URLs are valid and direct to the course page.
+        CRITICAL RULE: For a course to be included, its 'requiredSubjects' list must ONLY contain subjects from the student's combination of "${subjectCombination}". If a course requires an A-level that the student has not chosen, it MUST be excluded. 'recommendedSubjects' can be outside this list.
         Return the data as a JSON array matching this schema:
         [{
             "courseName": "string",
