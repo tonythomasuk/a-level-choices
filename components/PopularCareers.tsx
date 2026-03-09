@@ -24,17 +24,26 @@ export const PopularCareers: React.FC<PopularCareersProps> = ({ careers, earning
                 </div>
                 <div className="space-y-4 md:pl-10">
                     {careers.map((career, index) => (
-                        <div key={index} className="p-4 border border-slate-200 rounded-lg bg-slate-50/50">
-                            <h4 className="font-bold text-lg text-purple-700">{career.careerName}</h4>
-                            <p className="mt-1">{career.summary}</p>
-                            {career.degreePathways && career.degreePathways.length > 0 && (
-                                <p className="mt-2 text-xs font-semibold text-indigo-700 bg-indigo-100 inline-block px-2 py-1 rounded-full">
-                                    Pathway: {career.degreePathways.join(' / ')}
-                                </p>
-                            )}
-                            <p className="mt-3 text-sm">
-                                <strong>Example Employers:</strong> {career.companies.join(', ')}
-                            </p>
+                        <div key={index} className="p-6 border border-slate-100 rounded-2xl bg-slate-50/30 hover:bg-white hover:shadow-xl hover:shadow-indigo-100/50 transition-all group">
+                            <h4 className="font-black text-xl text-slate-900 group-hover:text-indigo-600 transition-colors">{career.careerName}</h4>
+                            <p className="mt-2 text-slate-600 leading-relaxed">{career.summary}</p>
+                            <div className="mt-4 flex flex-wrap gap-2">
+                                {career.degreePathways && career.degreePathways.map((path, i) => (
+                                    <span key={i} className="text-[10px] font-black uppercase tracking-widest text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">
+                                        {path}
+                                    </span>
+                                ))}
+                            </div>
+                            <div className="mt-6 pt-4 border-t border-slate-100">
+                                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-2">Top Employers</span>
+                                <div className="flex flex-wrap gap-3">
+                                    {career.companies.map((company, i) => (
+                                        <span key={i} className="text-sm font-bold text-slate-700 bg-white px-3 py-1 rounded-lg border border-slate-100 shadow-sm">
+                                            {company}
+                                        </span>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     ))}
                 </div>

@@ -6,6 +6,7 @@ export interface UniversityCourse {
     requiredSubjects: string[];
     recommendedSubjects: string[];
     gcseRequirements: string;
+    matchingExplanation: string;
 }
 
 export interface PopularCareer {

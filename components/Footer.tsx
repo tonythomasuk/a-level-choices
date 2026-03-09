@@ -37,28 +37,43 @@ export const Footer: React.FC = () => {
                 }
                 `}
             </style>
-            <footer className="bg-slate-800 text-slate-300 text-center py-8 mt-12">
+            <footer className="bg-slate-900 text-slate-400 py-16 mt-20">
                 <div className="container mx-auto max-w-4xl px-4">
-                     <button
-                        onClick={handlePrint}
-                        className="mb-6 px-6 py-2 bg-slate-600 text-white font-bold rounded-full hover:bg-slate-500 transition-colors"
-                    >
-                        Export Results to PDF / Print
-                    </button>
-                    <p className="text-sm">
-                        Copyright © {new Date().getFullYear()} <a href="https://www.linkedin.com/in/tonythomas/" target="_blank" rel="noopener noreferrer" className="text-indigo-400 hover:underline">Tony Thomas</a>. Experimental app using public data from official sources.
-                    </p>
-                    <div className="mt-4 text-xs">
-                        <p className="font-semibold mb-1">Primary Data Sources:</p>
-                        <ul className="flex flex-wrap justify-center gap-x-4 gap-y-1">
-                            {sources.map(source => (
-                                <li key={source.name}>
-                                    <a href={source.url} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors">
-                                        {source.name}
-                                    </a>
-                                </li>
-                            ))}
-                        </ul>
+                    <div className="flex flex-col md:flex-row items-center justify-between gap-8 mb-12">
+                        <div className="text-left">
+                            <h4 className="text-white font-black text-xl mb-2 tracking-tighter">A-level & Beyond</h4>
+                            <p className="text-sm max-w-xs">Empowering UK students to explore their academic and professional potential through data-driven insights.</p>
+                        </div>
+                        <button
+                            onClick={handlePrint}
+                            className="px-8 py-3 bg-white/10 text-white font-black text-xs uppercase tracking-widest rounded-full hover:bg-white/20 transition-all border border-white/10"
+                        >
+                            Export Analysis to PDF
+                        </button>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-8 border-t border-white/5">
+                        <div className="text-left">
+                            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-white/30 mb-4">Primary Data Sources</p>
+                            <ul className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs">
+                                {sources.map(source => (
+                                    <li key={source.name}>
+                                        <a href={source.url} target="_blank" rel="noopener noreferrer" className="hover:text-white transition-colors flex items-center gap-2">
+                                            <span className="w-1 h-1 bg-indigo-500 rounded-full"></span>
+                                            {source.name}
+                                        </a>
+                                    </li>
+                                ))}
+                            </ul>
+                        </div>
+                        <div className="md:text-right flex flex-col justify-end">
+                            <p className="text-xs">
+                                Created by <a href="https://www.linkedin.com/in/tonythomas/" target="_blank" rel="noopener noreferrer" className="text-white font-bold hover:underline">Tony Thomas</a>
+                            </p>
+                            <p className="text-[10px] text-white/20 mt-1 uppercase tracking-widest">
+                                © {new Date().getFullYear()} • Experimental AI Application
+                            </p>
+                        </div>
                     </div>
                 </div>
             </footer>

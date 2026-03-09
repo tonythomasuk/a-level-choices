@@ -1,25 +1,9 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { BaseAnalysis, UniversityCourse, SkipSubjectInfo } from '../types';
 
-// Commented out to replace with Vercel flexibility
-//const getApiKey = (): string => {
-//    return process.env.API_KEY as string;
-//};
-
-//Get Application ready to work in a Vercel environment
 const getApiKey = (): string => {
-    // Vercel automatically injects environment variables prefixed with VITE_ into the import.meta.env object.
-    // We check the hostname to determine if the app is running in the Vercel environment.
-    if (window.location.hostname.endsWith('.vercel.app')) {
-        // In a Vercel environment (or during local dev with a .env file),
-        // use the custom key. 'VITE_API_KEY' is a standard convention.
-        return import.meta.env.VITE_API_KEY as string;
-    }
-
-    // In the default environment (e.g., Google's Canvas), use the provided API_KEY.
     return process.env.API_KEY as string;
 };
-//End of newly inserted text
 
 const getAIClient = () => new GoogleGenAI({ apiKey: getApiKey() });
 
@@ -115,14 +99,15 @@ export const generateUniversityCourses = async (subjects: string[], university: 
         : `Provide up to 5 courses specifically from ${university}.`;
 
     const prompt = `
-        You are an expert UK university admissions advisor, acting as a strict data filter.
+        You are an expert UK university admissions advisor, acting as a nuanced data filter.
         Your task is to find suitable undergraduate degree courses for a student with the A-level subjects: "${subjectCombination}".
         ${universityFilter}
-        You must follow these rules without exception:
+        You must follow these rules:
         1.  **Verification:** All information MUST be verified against the official university website and UCAS for the upcoming academic year. All URLs must be valid and deep-link directly to the course information page.
-        2.  **Strict Subject Requirement:** A course is ONLY a valid match if its list of *required* A-level subjects is a subset of the student's subjects ("${subjectCombination}"). For example, if a student has (Maths, Physics, Chemistry) and a course requires (Maths, Physics), it is a match. If a course requires (Maths, Further Maths), it is NOT a match.
+        2.  **Subject Matching:** A course is a valid match if its list of *required* A-level subjects is a subset of the student's subjects ("${subjectCombination}"). Use fuzzy matching for subject names (e.g., "Maths" matches "Mathematics", "Biology" matches "a science subject").
         3.  **No Extraneous Requirements:** If a course requires any A-level subject not in the student's list, it MUST be excluded from the results.
         4.  **Recommended Subjects:** 'recommendedSubjects' can include subjects outside the student's list.
+        5.  **Matching Explanation:** Provide a detailed explanation in 'matchingExplanation' about how the student's subjects fit the course requirements, especially for recommended subjects. For example, "Your Maths and Physics are required, and your Chemistry is highly recommended for this Engineering course."
         Return the data as a JSON array matching the specified schema.
     `;
     
@@ -138,8 +123,9 @@ export const generateUniversityCourses = async (subjects: string[], university: 
                 requiredSubjects: { type: Type.ARRAY, items: { type: Type.STRING } },
                 recommendedSubjects: { type: Type.ARRAY, items: { type: Type.STRING } },
                 gcseRequirements: { type: Type.STRING },
+                matchingExplanation: { type: Type.STRING, description: "Detailed explanation of how the student's subjects fit the requirements." },
             },
-            required: ["courseName", "universityName", "url", "typicalOffer", "requiredSubjects", "recommendedSubjects", "gcseRequirements"]
+            required: ["courseName", "universityName", "url", "typicalOffer", "requiredSubjects", "recommendedSubjects", "gcseRequirements", "matchingExplanation"]
         }
     };
 

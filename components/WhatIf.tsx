@@ -1,5 +1,6 @@
 
 import React, { useState, useCallback } from 'react';
+import { motion } from 'motion/react';
 import { A_LEVEL_SUBJECTS } from '../constants';
 import { generateWhatIfStory } from '../services/geminiService';
 import { marked } from 'marked';
@@ -52,22 +53,22 @@ export const WhatIf: React.FC<WhatIfProps> = ({ currentSubjects, onRerun }) => {
     return (
         <div>
             <p className="mb-4">Explore how your future could change by swapping just one subject.</p>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 p-4 bg-slate-50 rounded-lg border border-slate-200">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-8 bg-slate-50/50 rounded-3xl border border-slate-100">
                 <div>
-                    <label htmlFor="replace-select" className="text-sm font-medium">Replace Subject:</label>
-                    <select id="replace-select" value={subjectToReplace} onChange={e => setSubjectToReplace(e.target.value)} className="w-full mt-1 p-2 border border-slate-300 rounded-md">
+                    <label htmlFor="replace-select" className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-2">Replace Subject</label>
+                    <select id="replace-select" value={subjectToReplace} onChange={e => setSubjectToReplace(e.target.value)} className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none">
                         {currentSubjects.map(s => <option key={s} value={s}>{s}</option>)}
                     </select>
                 </div>
                 <div>
-                    <label htmlFor="new-subject-input" className="text-sm font-medium">With Subject:</label>
+                    <label htmlFor="new-subject-input" className="text-[10px] font-black uppercase tracking-widest text-slate-400 block mb-2">With Subject</label>
                     <input 
                         type="text" 
                         id="new-subject-input"
                         list="subject-list"
                         value={newSubject}
                         onChange={e => setNewSubject(e.target.value)}
-                        className="w-full mt-1 p-2 border border-slate-300 rounded-md"
+                        className="w-full p-3 bg-white border border-slate-200 rounded-xl font-bold text-slate-700 focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none"
                         placeholder="e.g., Computer Science"
                     />
                      <datalist id="subject-list">
@@ -78,28 +79,35 @@ export const WhatIf: React.FC<WhatIfProps> = ({ currentSubjects, onRerun }) => {
                     <button 
                         onClick={handleGenerateStory}
                         disabled={loading || !newSubject || newSubject === subjectToReplace}
-                        className="w-full px-4 py-2 bg-purple-600 text-white font-bold rounded-full hover:bg-purple-700 disabled:bg-slate-400"
+                        className="w-full px-6 py-3 bg-purple-600 text-white font-black text-sm uppercase tracking-widest rounded-xl hover:bg-purple-700 disabled:bg-slate-200 disabled:text-slate-400 transition-all shadow-lg shadow-purple-100"
                     >
-                        {loading ? 'Generating...' : 'Generate New Story'}
+                        {loading ? 'Generating...' : 'See the Change'}
                     </button>
                 </div>
             </div>
-            {error && <p className="mt-2 text-sm text-red-600">{error}</p>}
+            {error && <p className="mt-4 text-sm text-red-600 font-bold px-4">{error}</p>}
             
             {newStory && (
-                <div className="mt-6 p-4 bg-purple-50 rounded-lg border border-purple-200">
-                    <h4 className="font-bold text-xl text-purple-800 mb-2">An Alternate Story</h4>
-                    <div dangerouslySetInnerHTML={{ __html: newStoryHtml }} />
-                    <div className="mt-6 text-center">
-                        <p className="text-sm text-slate-600 mb-2">Like this new direction? Rerun the full analysis to see new university courses and career paths.</p>
+                <motion.div 
+                    initial={{ opacity: 0, scale: 0.95 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    className="mt-8 p-8 bg-gradient-to-br from-purple-50 to-indigo-50 rounded-3xl border border-purple-100 shadow-inner"
+                >
+                    <div className="flex items-center gap-3 mb-6">
+                        <div className="w-10 h-10 bg-purple-600 rounded-full flex items-center justify-center text-white font-black">?</div>
+                        <h4 className="font-black text-2xl text-slate-900">An Alternate Story</h4>
+                    </div>
+                    <div className="prose prose-purple max-w-none text-lg leading-relaxed text-slate-700 italic" dangerouslySetInnerHTML={{ __html: newStoryHtml }} />
+                    <div className="mt-10 pt-8 border-t border-purple-200/50 text-center">
+                        <p className="text-sm font-bold text-slate-500 mb-6 uppercase tracking-widest">Like this new direction?</p>
                         <button 
                             onClick={handleRerun}
-                            className="px-6 py-2 bg-green-600 text-white font-bold rounded-full hover:bg-green-700"
+                            className="px-10 py-4 bg-slate-900 text-white font-black text-sm uppercase tracking-widest rounded-full hover:bg-black transition-all transform hover:scale-105 active:scale-95 shadow-xl"
                         >
                             Rerun Full Analysis with {newSubject}
                         </button>
                     </div>
-                </div>
+                </motion.div>
             )}
         </div>
     );
