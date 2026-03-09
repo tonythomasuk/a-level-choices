@@ -1,9 +1,25 @@
 import { GoogleGenAI, Type } from "@google/genai";
 import type { BaseAnalysis, UniversityCourse, SkipSubjectInfo } from '../types';
 
+// Commented out to replace with Vercel flexibility
+//const getApiKey = (): string => {
+//    return process.env.API_KEY as string;
+//};
+
+//Get Application ready to work in a Vercel environment
 const getApiKey = (): string => {
+    // Vercel automatically injects environment variables prefixed with VITE_ into the import.meta.env object.
+    // We check the hostname to determine if the app is running in the Vercel environment.
+    if (window.location.hostname.endsWith('.vercel.app')) {
+        // In a Vercel environment (or during local dev with a .env file),
+        // use the custom key. 'VITE_API_KEY' is a standard convention.
+        return import.meta.env.VITE_API_KEY as string;
+    }
+
+    // In the default environment (e.g., Google's Canvas), use the provided API_KEY.
     return process.env.API_KEY as string;
 };
+//End of newly inserted text
 
 const getAIClient = () => new GoogleGenAI({ apiKey: getApiKey() });
 
