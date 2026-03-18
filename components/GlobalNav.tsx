@@ -8,9 +8,9 @@ interface GlobalNavProps {
 
 export const GlobalNav: React.FC<GlobalNavProps> = ({ currentView, onNavigate }) => {
     const navItems = [
-        { id: 'dreamer', label: 'Dreamer', color: 'bg-purple-600', textColor: 'text-purple-600' },
         { id: 'architect', label: 'Architect', color: 'bg-indigo-600', textColor: 'text-indigo-600' },
         { id: 'builder', label: 'Builder', color: 'bg-emerald-600', textColor: 'text-emerald-600' },
+        { id: 'dreamer', label: 'Dreamer', color: 'bg-purple-600', textColor: 'text-purple-600' },
     ];
 
     return (

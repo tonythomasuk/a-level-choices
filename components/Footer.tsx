@@ -61,15 +61,6 @@ export const Footer: React.FC = () => {
                                 <label className="flex items-center gap-3 cursor-pointer group">
                                     <input 
                                         type="checkbox" 
-                                        checked={includeDreamer} 
-                                        onChange={e => setIncludeDreamer(e.target.checked)}
-                                        className="w-4 h-4 rounded border-white/20 bg-white/10 text-purple-500 focus:ring-purple-500 focus:ring-offset-slate-900"
-                                    />
-                                    <span className={`text-xs font-bold transition-colors ${includeDreamer ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'}`}>The Dreamer</span>
-                                </label>
-                                <label className="flex items-center gap-3 cursor-pointer group">
-                                    <input 
-                                        type="checkbox" 
                                         checked={includeArchitect} 
                                         onChange={e => setIncludeArchitect(e.target.checked)}
                                         className="w-4 h-4 rounded border-white/20 bg-white/10 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-slate-900"
@@ -84,6 +75,15 @@ export const Footer: React.FC = () => {
                                         className="w-4 h-4 rounded border-white/20 bg-white/10 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-slate-900"
                                     />
                                     <span className={`text-xs font-bold transition-colors ${includeBuilder ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'}`}>The Builder</span>
+                                </label>
+                                <label className="flex items-center gap-3 cursor-pointer group">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={includeDreamer} 
+                                        onChange={e => setIncludeDreamer(e.target.checked)}
+                                        className="w-4 h-4 rounded border-white/20 bg-white/10 text-purple-500 focus:ring-purple-500 focus:ring-offset-slate-900"
+                                    />
+                                    <span className={`text-xs font-bold transition-colors ${includeDreamer ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'}`}>The Dreamer</span>
                                 </label>
                             </div>
                         </div>
