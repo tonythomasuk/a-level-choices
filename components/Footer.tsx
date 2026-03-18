@@ -38,7 +38,7 @@ export const Footer: React.FC = () => {
 
     const handlePrint = useReactToPrint({
         contentRef: componentRef,
-        documentTitle: 'A-Level-Nexus-Report',
+        documentTitle: 'Pathfinder-Nexus-Report',
     });
 
     return (
@@ -50,10 +50,10 @@ export const Footer: React.FC = () => {
                 />
             </div>
             <footer className="bg-slate-900 text-slate-400 py-16 mt-20 print:hidden">
-                <div className="container mx-auto max-w-4xl px-4">
+                <div className="container mx-auto max-w-5xl px-4">
                     <div className="flex flex-col md:flex-row items-center justify-between gap-8 mb-12">
                         <div className="text-left">
-                            <h4 className="text-white font-black text-xl mb-2 tracking-tighter">A-level & Beyond</h4>
+                            <h4 className="text-white font-black text-xl mb-2 tracking-tighter">Pathfinder Nexus</h4>
                             <p className="text-sm max-w-xs mb-6">Empowering UK students to explore their academic and professional potential through data-driven insights.</p>
                             
                             <div className="space-y-3 bg-white/5 p-4 rounded-xl border border-white/10">

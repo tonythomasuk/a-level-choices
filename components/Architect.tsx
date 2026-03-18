@@ -61,7 +61,7 @@ const StickySummary: React.FC<{ subjects: string[] }> = ({ subjects }) => {
                     exit={{ y: -100 }}
                     className="fixed top-0 left-0 right-0 z-50 p-4 bg-white/80 backdrop-blur-lg border-b border-slate-200 shadow-sm print:hidden"
                 >
-                    <div className="container mx-auto max-w-4xl flex items-center justify-between">
+                    <div className="container mx-auto max-w-5xl flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <span className="text-xs font-bold text-slate-400 uppercase tracking-widest hidden md:block">Exploring:</span>
                             <div className="flex gap-2">
@@ -183,10 +183,10 @@ export const Architect: React.FC<ArchitectProps> = ({ onBack }) => {
     };
 
     return (
-        <div className="min-h-screen bg-slate-50">
+        <div className="min-h-screen bg-slate-50 text-slate-900 pb-24">
             <StickySummary subjects={subjects.filter(s => s)} />
             
-            <main className="container mx-auto max-w-4xl p-4 md:p-8 pb-24">
+            <main className="container mx-auto max-w-5xl p-6">
                 <Header />
                 
                 <Section>
@@ -298,6 +298,17 @@ export const Architect: React.FC<ArchitectProps> = ({ onBack }) => {
                         </motion.div>
                     )}
                 </AnimatePresence>
+
+                {/* Bottom Prompt */}
+                <div className="mt-16 p-8 bg-white rounded-3xl border border-indigo-100 text-center shadow-sm">
+                    <h3 className="text-lg font-black text-slate-900 mb-2">Where to next?</h3>
+                    <p className="text-slate-600 mb-4 font-medium">
+                        Explore a University course-based view in <span className="font-bold text-emerald-600">The Builder</span> or want to dream up new careers? Try <span className="font-bold text-purple-600">The Dreamer</span>.
+                    </p>
+                    <p className="text-sm text-slate-400 font-medium">
+                        Select your next path from the navigation menu at the top of the page.
+                    </p>
+                </div>
             </main>
         </div>
     );

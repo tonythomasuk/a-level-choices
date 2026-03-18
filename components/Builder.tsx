@@ -75,7 +75,7 @@ export const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                         animate={{ opacity: 1, y: 0 }}
                         className="text-center mb-12"
                     >
-                        <h2 className="text-4xl font-black text-slate-900 mb-4 tracking-tight">Construct Your Course</h2>
+                        <h2 className="text-4xl font-black text-slate-900 mb-4 tracking-tight">The Builder</h2>
                         <p className="text-slate-500 text-lg font-medium">Choose your Major and optional Minors to find the perfect Russell Group combination.</p>
                     </motion.div>
 
@@ -243,6 +243,17 @@ export const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                             </motion.div>
                         ))}
                     </div>
+                </div>
+
+                {/* Bottom Prompt */}
+                <div className="mt-16 p-8 bg-white rounded-3xl border border-emerald-100 text-center shadow-sm">
+                    <h3 className="text-lg font-black text-slate-900 mb-2">Where to next?</h3>
+                    <p className="text-slate-600 mb-4 font-medium">
+                        Explore more career choices based on subjects in <span className="font-bold text-indigo-600">The Architect</span> or want to start with a vision? Try <span className="font-bold text-purple-600">The Dreamer</span>.
+                    </p>
+                    <p className="text-sm text-slate-400 font-medium">
+                        Select your next path from the navigation menu at the top of the page.
+                    </p>
                 </div>
             </main>
         </div>

@@ -37,7 +37,7 @@ export const PrintPreview = forwardRef<HTMLDivElement, { config?: { includeArchi
     return (
         <div ref={ref} id="print-preview" className="p-12 bg-white text-slate-900 min-h-screen">
             <div className="mb-12 border-b-4 border-indigo-600 pb-6">
-                <h1 className="text-4xl font-black tracking-tighter uppercase">A-Level <span className="text-indigo-600">Nexus</span> Report</h1>
+                <h1 className="text-4xl font-black tracking-tighter uppercase">Pathfinder <span className="text-indigo-600">Nexus</span> Report</h1>
                 <p className="text-sm font-bold text-slate-500 mt-2 uppercase tracking-widest">Generated on {new Date().toLocaleDateString()}</p>
             </div>
 

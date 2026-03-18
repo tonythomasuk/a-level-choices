@@ -308,6 +308,17 @@ export const Dreamer: React.FC<DreamerProps> = ({ onBack }) => {
                         </div>
                     </div>
                 )}
+
+                {/* Bottom Prompt */}
+                <div className="mt-16 p-8 bg-white rounded-3xl border border-purple-100 text-center shadow-sm">
+                    <h3 className="text-lg font-black text-slate-900 mb-2">Where to next?</h3>
+                    <p className="text-slate-600 mb-4 font-medium">
+                        Explore a subject-based view in <span className="font-bold text-indigo-600">The Architect</span> or a University course-based view in <span className="font-bold text-emerald-600">The Builder</span>.
+                    </p>
+                    <p className="text-sm text-slate-400 font-medium">
+                        Select your next path from the navigation menu at the top of the page.
+                    </p>
+                </div>
             </main>
         </div>
     );

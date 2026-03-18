@@ -23,7 +23,7 @@ export const GlobalNav: React.FC<GlobalNavProps> = ({ currentView, onNavigate })
                     <div className="w-8 h-8 bg-slate-900 rounded-lg flex items-center justify-center group-hover:scale-110 transition-transform">
                         <span className="text-white font-black text-xs">N</span>
                     </div>
-                    <span className="font-black tracking-tighter text-slate-900 hidden sm:block">A-LEVEL <span className="text-indigo-600">NEXUS</span></span>
+                    <span className="font-black tracking-tighter text-slate-900 hidden sm:block">PATHFINDER <span className="text-indigo-600">NEXUS</span></span>
                 </button>
 
                 <div className="flex items-center gap-1 sm:gap-4">
