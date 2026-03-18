@@ -1,10 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Nexus } from './components/Nexus';
 import { Architect } from './components/Architect';
 import { Dreamer } from './components/Dreamer';
 import { Builder } from './components/Builder';
 import { Footer } from './components/Footer';
+import { GlobalNav } from './components/GlobalNav';
+import { PrintPreview } from './components/PrintPreview';
 import { A_LEVEL_SUBJECTS } from './constants';
 import { DREAMER_DATA } from './dreamerData';
 
@@ -13,6 +15,16 @@ type View = 'nexus' | 'architect' | 'dreamer' | 'builder';
 const App: React.FC = () => {
     const [view, setView] = useState<View>('nexus');
     const [architectInitialSubjects, setArchitectInitialSubjects] = useState<[string, string, string, string] | undefined>(undefined);
+
+    // Persistence logic
+    useEffect(() => {
+        const savedView = localStorage.getItem('nexus_current_view');
+        if (savedView) setView(savedView as View);
+    }, []);
+
+    useEffect(() => {
+        localStorage.setItem('nexus_current_view', view);
+    }, [view]);
 
     const handleSelectArchitect = () => {
         setArchitectInitialSubjects(undefined);
@@ -52,29 +64,13 @@ const App: React.FC = () => {
         setView('architect');
     };
 
-    const handleHandshake = (mandatorySubjects: string[]) => {
-        const subjects: [string, string, string, string] = ['', '', '', ''];
-        mandatorySubjects.forEach((s, i) => {
-            if (i < 4) subjects[i] = s;
-        });
-        
-        // Ensure at least 3 subjects for Architect
-        if (mandatorySubjects.length < 3) {
-            const available = A_LEVEL_SUBJECTS.filter(s => !mandatorySubjects.includes(s));
-            let count = mandatorySubjects.length;
-            while (count < 3) {
-                const randomSub = available[Math.floor(Math.random() * available.length)];
-                subjects[count] = randomSub;
-                count++;
-            }
-        }
-
-        setArchitectInitialSubjects(subjects);
-        setView('architect');
-    };
-
     return (
         <div className="min-h-screen bg-white selection:bg-indigo-100 selection:text-indigo-900">
+            <PrintPreview />
+            {view !== 'nexus' && (
+                <GlobalNav currentView={view} onNavigate={setView} />
+            )}
+            
             <AnimatePresence mode="wait">
                 {view === 'nexus' && (
                     <motion.div
@@ -115,7 +111,6 @@ const App: React.FC = () => {
                         exit={{ opacity: 0, x: -20 }}
                     >
                         <Builder 
-                            onHandshake={handleHandshake}
                             onBack={() => setView('nexus')}
                         />
                         <Footer />
@@ -130,7 +125,6 @@ const App: React.FC = () => {
                         exit={{ opacity: 0, x: -20 }}
                     >
                         <Dreamer 
-                            onHandshake={handleHandshake}
                             onBack={() => setView('nexus')}
                         />
                         <Footer />

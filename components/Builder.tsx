@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { UNIVERSITY_SUBJECT_CATEGORIES, RUSSELL_GROUP_UNIVERSITIES } from '../constants';
 import { generateBuilderCourses } from '../services/geminiService';
@@ -6,11 +6,10 @@ import { BuilderCourse } from '../types';
 import { LoadingSpinner } from './LoadingSpinner';
 
 interface BuilderProps {
-    onHandshake: (subjects: string[]) => void;
     onBack: () => void;
 }
 
-export const Builder: React.FC<BuilderProps> = ({ onHandshake, onBack }) => {
+export const Builder: React.FC<BuilderProps> = ({ onBack }) => {
     const [major, setMajor] = useState('');
     const [minor1, setMinor1] = useState('');
     const [minor2, setMinor2] = useState('');
@@ -18,6 +17,29 @@ export const Builder: React.FC<BuilderProps> = ({ onHandshake, onBack }) => {
     const [loading, setLoading] = useState(false);
     const [courses, setCourses] = useState<BuilderCourse[]>([]);
     const [error, setError] = useState<string | null>(null);
+
+    // Load state from localStorage on mount
+    useEffect(() => {
+        const saved = localStorage.getItem('builder_state');
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                setMajor(parsed.major || '');
+                setMinor1(parsed.minor1 || '');
+                setMinor2(parsed.minor2 || '');
+                setTargetUnis(parsed.targetUnis || ['', '', '']);
+                setCourses(parsed.courses || []);
+            } catch (e) {
+                console.error('Failed to load builder state', e);
+            }
+        }
+    }, []);
+
+    // Save state to localStorage whenever it changes
+    useEffect(() => {
+        const state = { major, minor1, minor2, targetUnis, courses };
+        localStorage.setItem('builder_state', JSON.stringify(state));
+    }, [major, minor1, minor2, targetUnis, courses]);
 
     const handleSearch = async () => {
         if (!major) {
@@ -46,22 +68,6 @@ export const Builder: React.FC<BuilderProps> = ({ onHandshake, onBack }) => {
 
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 pb-24">
-            {/* Header */}
-            <header className="bg-white border-b border-slate-200 p-4 sticky top-0 z-30">
-                <div className="container mx-auto max-w-5xl flex items-center justify-between">
-                    <button onClick={onBack} className="flex items-center text-slate-500 hover:text-slate-900 transition-colors font-bold text-sm uppercase tracking-widest">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                        </svg>
-                        Back to Nexus
-                    </button>
-                    <div className="text-center">
-                        <h1 className="text-xl font-black tracking-tighter">THE <span className="text-emerald-600">BUILDER</span></h1>
-                    </div>
-                    <div className="w-24"></div>
-                </div>
-            </header>
-
             <main className="container mx-auto max-w-5xl p-6">
                 <div className="py-12">
                     <motion.div 
@@ -233,14 +239,6 @@ export const Builder: React.FC<BuilderProps> = ({ onHandshake, onBack }) => {
                                         </div>
                                     </div>
 
-                                    <div className="pt-8 border-t border-slate-100">
-                                        <button 
-                                            onClick={() => onHandshake(course.a_level.mandatory)}
-                                            className="w-full py-4 bg-emerald-50 text-emerald-700 font-black text-xs uppercase tracking-widest rounded-2xl hover:bg-emerald-100 transition-all"
-                                        >
-                                            🤝 Check my current subjects against this path
-                                        </button>
-                                    </div>
                                 </div>
                             </motion.div>
                         ))}

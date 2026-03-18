@@ -1,16 +1,46 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { DREAMER_DATA } from '../dreamerData';
 import { DreamerWorld, DreamerCourse } from '../types';
 
 interface DreamerProps {
-    onHandshake: (subjects: string[]) => void;
     onBack: () => void;
 }
 
-export const Dreamer: React.FC<DreamerProps> = ({ onHandshake, onBack }) => {
+export const Dreamer: React.FC<DreamerProps> = ({ onBack }) => {
     const [selectedWorld, setSelectedWorld] = useState<DreamerWorld | null>(null);
     const [selectedCourse, setSelectedCourse] = useState<DreamerCourse | null>(null);
+
+    // Load state from localStorage on mount
+    useEffect(() => {
+        const saved = localStorage.getItem('dreamer_state');
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                if (parsed.selectedWorldId) {
+                    const world = DREAMER_DATA.find(w => w.id === parsed.selectedWorldId);
+                    if (world) {
+                        setSelectedWorld(world);
+                        if (parsed.selectedCourseTitle) {
+                            const course = world.courses.find(c => c.title === parsed.selectedCourseTitle);
+                            if (course) setSelectedCourse(course);
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Failed to load dreamer state', e);
+            }
+        }
+    }, []);
+
+    // Save state to localStorage whenever it changes
+    useEffect(() => {
+        const state = {
+            selectedWorldId: selectedWorld?.id,
+            selectedCourseTitle: selectedCourse?.title
+        };
+        localStorage.setItem('dreamer_state', JSON.stringify(state));
+    }, [selectedWorld, selectedCourse]);
 
     const handleWorldSelect = (world: DreamerWorld) => {
         setSelectedWorld(world);
@@ -23,22 +53,6 @@ export const Dreamer: React.FC<DreamerProps> = ({ onHandshake, onBack }) => {
 
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 pb-24">
-            {/* Header */}
-            <header className="bg-white border-b border-slate-200 p-4 sticky top-0 z-30">
-                <div className="container mx-auto max-w-5xl flex items-center justify-between">
-                    <button onClick={onBack} className="flex items-center text-slate-500 hover:text-slate-900 transition-colors font-bold text-sm uppercase tracking-widest">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                        </svg>
-                        Back to Nexus
-                    </button>
-                    <div className="text-center">
-                        <h1 className="text-xl font-black tracking-tighter">THE <span className="text-purple-600">DREAMER</span></h1>
-                    </div>
-                    <div className="w-24"></div> {/* Spacer */}
-                </div>
-            </header>
-
             <main className="container mx-auto max-w-5xl p-6">
                 {!selectedWorld ? (
                     <div className="py-12">
@@ -192,15 +206,6 @@ export const Dreamer: React.FC<DreamerProps> = ({ onHandshake, onBack }) => {
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-
-                                                    <div className="mt-12 pt-8 border-t border-white/5">
-                                                        <button 
-                                                            onClick={() => onHandshake(selectedCourse.a_level.mandatory)}
-                                                            className="w-full py-4 bg-white text-slate-900 font-black text-sm uppercase tracking-widest rounded-2xl hover:bg-purple-400 hover:text-white transition-all transform hover:scale-[1.02] active:scale-[0.98]"
-                                                        >
-                                                            🤝 Check my current subjects against this dream
-                                                        </button>
                                                     </div>
                                                 </div>
                                             </section>

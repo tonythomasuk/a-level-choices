@@ -78,7 +78,7 @@ const StickySummary: React.FC<{ subjects: string[] }> = ({ subjects }) => {
 };
 
 export const Architect: React.FC<ArchitectProps> = ({ initialSubjects: propInitialSubjects, onBack }) => {
-    const [subjects, setSubjects] = useState<[string, string, string, string]>(propInitialSubjects || ['', '', '', '']);
+    const [subjects, setSubjects] = useState<[string, string, string, string]>(['', '', '', '']);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
@@ -95,11 +95,38 @@ export const Architect: React.FC<ArchitectProps> = ({ initialSubjects: propIniti
         return [shuffled[0], shuffled[1], shuffled[2], ''] as [string, string, string, string];
     }, []);
 
+    // Load state from localStorage on mount
     useEffect(() => {
-        if (!propInitialSubjects) {
+        const saved = localStorage.getItem('architect_state');
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                setSubjects(parsed.subjects);
+                setAnalysisResult(parsed.analysisResult);
+                setSkipInfo(parsed.skipInfo);
+                setVisibleSections(parsed.visibleSections);
+                setCachedCourses(parsed.cachedCourses || {});
+            } catch (e) {
+                console.error('Failed to load architect state', e);
+            }
+        } else if (propInitialSubjects) {
+            setSubjects(propInitialSubjects);
+        } else {
             setSubjects(randomInitialSubjects);
         }
     }, [propInitialSubjects, randomInitialSubjects]);
+
+    // Save state to localStorage whenever it changes
+    useEffect(() => {
+        const state = {
+            subjects,
+            analysisResult,
+            skipInfo,
+            visibleSections,
+            cachedCourses
+        };
+        localStorage.setItem('architect_state', JSON.stringify(state));
+    }, [subjects, analysisResult, skipInfo, visibleSections, cachedCourses]);
 
     const handleExplore = useCallback(async (selectedSubjects: [string, string, string, string]) => {
         setSubjects(selectedSubjects);
@@ -152,18 +179,6 @@ export const Architect: React.FC<ArchitectProps> = ({ initialSubjects: propIniti
         <div className="min-h-screen bg-white">
             <StickySummary subjects={subjects.filter(s => s)} />
             
-            {/* Simple Nav */}
-            <nav className="p-4 border-b border-slate-100">
-                <div className="container mx-auto max-w-4xl flex items-center">
-                    <button onClick={onBack} className="text-xs font-black text-slate-400 uppercase tracking-widest hover:text-indigo-600 transition-colors flex items-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                        </svg>
-                        Back to Nexus
-                    </button>
-                </div>
-            </nav>
-
             <main className="container mx-auto max-w-4xl p-4 md:p-8 pb-24">
                 <Header />
                 

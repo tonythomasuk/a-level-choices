@@ -10,8 +10,16 @@ const sources = [
 ];
 
 export const Footer: React.FC = () => {
+    const [includeArchitect, setIncludeArchitect] = React.useState(true);
+    const [includeBuilder, setIncludeBuilder] = React.useState(false);
+    const [includeDreamer, setIncludeDreamer] = React.useState(false);
+
     const handlePrint = () => {
-        window.print();
+        // Set a global flag for the PrintPreview component
+        window.dispatchEvent(new CustomEvent('nexus-print-config', {
+            detail: { includeArchitect, includeBuilder, includeDreamer }
+        }));
+        setTimeout(() => window.print(), 100);
     };
 
     return (
@@ -22,33 +30,65 @@ export const Footer: React.FC = () => {
                     body * {
                         visibility: hidden;
                     }
-                    main, main * {
+                    #print-preview, #print-preview * {
                         visibility: visible;
                     }
-                    main {
+                    #print-preview {
                         position: absolute;
                         left: 0;
                         top: 0;
                         width: 100%;
+                        display: block !important;
                     }
-                    button, form, footer {
+                    button, form, footer, nav {
                         display: none !important;
                     }
                 }
                 `}
             </style>
-            <footer className="bg-slate-900 text-slate-400 py-16 mt-20">
+            <footer className="bg-slate-900 text-slate-400 py-16 mt-20 print:hidden">
                 <div className="container mx-auto max-w-4xl px-4">
                     <div className="flex flex-col md:flex-row items-center justify-between gap-8 mb-12">
                         <div className="text-left">
                             <h4 className="text-white font-black text-xl mb-2 tracking-tighter">A-level & Beyond</h4>
-                            <p className="text-sm max-w-xs">Empowering UK students to explore their academic and professional potential through data-driven insights.</p>
+                            <p className="text-sm max-w-xs mb-6">Empowering UK students to explore their academic and professional potential through data-driven insights.</p>
+                            
+                            <div className="space-y-3 bg-white/5 p-4 rounded-xl border border-white/10">
+                                <p className="text-[10px] font-black uppercase tracking-widest text-white/50 mb-2">Include in PDF:</p>
+                                <label className="flex items-center gap-3 cursor-pointer group">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={includeArchitect} 
+                                        onChange={e => setIncludeArchitect(e.target.checked)}
+                                        className="w-4 h-4 rounded border-white/20 bg-white/10 text-indigo-500 focus:ring-indigo-500 focus:ring-offset-slate-900"
+                                    />
+                                    <span className={`text-xs font-bold transition-colors ${includeArchitect ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'}`}>The Architect</span>
+                                </label>
+                                <label className="flex items-center gap-3 cursor-pointer group">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={includeBuilder} 
+                                        onChange={e => setIncludeBuilder(e.target.checked)}
+                                        className="w-4 h-4 rounded border-white/20 bg-white/10 text-emerald-500 focus:ring-emerald-500 focus:ring-offset-slate-900"
+                                    />
+                                    <span className={`text-xs font-bold transition-colors ${includeBuilder ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'}`}>The Builder</span>
+                                </label>
+                                <label className="flex items-center gap-3 cursor-pointer group">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={includeDreamer} 
+                                        onChange={e => setIncludeDreamer(e.target.checked)}
+                                        className="w-4 h-4 rounded border-white/20 bg-white/10 text-purple-500 focus:ring-purple-500 focus:ring-offset-slate-900"
+                                    />
+                                    <span className={`text-xs font-bold transition-colors ${includeDreamer ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'}`}>The Dreamer</span>
+                                </label>
+                            </div>
                         </div>
                         <button
                             onClick={handlePrint}
-                            className="px-8 py-3 bg-white/10 text-white font-black text-xs uppercase tracking-widest rounded-full hover:bg-white/20 transition-all border border-white/10"
+                            className="px-10 py-4 bg-white text-slate-900 font-black text-sm uppercase tracking-widest rounded-full hover:bg-indigo-50 transition-all shadow-xl shadow-white/5"
                         >
-                            Export Analysis to PDF
+                            Generate PDF Report
                         </button>
                     </div>
 
