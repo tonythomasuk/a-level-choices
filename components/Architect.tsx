@@ -95,39 +95,6 @@ export const Architect: React.FC<ArchitectProps> = ({ initialSubjects: propIniti
         return [shuffled[0], shuffled[1], shuffled[2], ''] as [string, string, string, string];
     }, []);
 
-    // Load state from localStorage on mount
-    useEffect(() => {
-        const saved = localStorage.getItem('architect_state');
-        if (saved) {
-            try {
-                const parsed = JSON.parse(saved);
-                setSubjects(parsed.subjects);
-                setAnalysisResult(parsed.analysisResult);
-                setSkipInfo(parsed.skipInfo);
-                setVisibleSections(parsed.visibleSections);
-                setCachedCourses(parsed.cachedCourses || {});
-            } catch (e) {
-                console.error('Failed to load architect state', e);
-            }
-        } else if (propInitialSubjects) {
-            setSubjects(propInitialSubjects);
-        } else {
-            setSubjects(randomInitialSubjects);
-        }
-    }, [propInitialSubjects, randomInitialSubjects]);
-
-    // Save state to localStorage whenever it changes
-    useEffect(() => {
-        const state = {
-            subjects,
-            analysisResult,
-            skipInfo,
-            visibleSections,
-            cachedCourses
-        };
-        localStorage.setItem('architect_state', JSON.stringify(state));
-    }, [subjects, analysisResult, skipInfo, visibleSections, cachedCourses]);
-
     const handleExplore = useCallback(async (selectedSubjects: [string, string, string, string]) => {
         setSubjects(selectedSubjects);
         
@@ -168,6 +135,45 @@ export const Architect: React.FC<ArchitectProps> = ({ initialSubjects: propIniti
             setLoading(false);
         }
     }, []);
+
+    // Load state from localStorage on mount
+    useEffect(() => {
+        const saved = localStorage.getItem('architect_state');
+        
+        // If we have propInitialSubjects, it takes precedence and triggers analysis
+        if (propInitialSubjects) {
+            setSubjects(propInitialSubjects);
+            handleExplore(propInitialSubjects);
+            return;
+        }
+
+        if (saved) {
+            try {
+                const parsed = JSON.parse(saved);
+                setSubjects(parsed.subjects);
+                setAnalysisResult(parsed.analysisResult);
+                setSkipInfo(parsed.skipInfo);
+                setVisibleSections(parsed.visibleSections);
+                setCachedCourses(parsed.cachedCourses || {});
+            } catch (e) {
+                console.error('Failed to load architect state', e);
+            }
+        } else {
+            setSubjects(randomInitialSubjects);
+        }
+    }, [propInitialSubjects, randomInitialSubjects, handleExplore]);
+
+    // Save state to localStorage whenever it changes
+    useEffect(() => {
+        const state = {
+            subjects,
+            analysisResult,
+            skipInfo,
+            visibleSections,
+            cachedCourses
+        };
+        localStorage.setItem('architect_state', JSON.stringify(state));
+    }, [subjects, analysisResult, skipInfo, visibleSections, cachedCourses]);
     
     const handleRerunAnalysis = (newSubjects: [string, string, string, string]) => {
         setSubjects(newSubjects);

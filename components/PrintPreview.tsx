@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, forwardRef, useImperativeHandle } from 'react';
 import { FutureStory } from './FutureStory';
 import { UniversityCourses } from './UniversityCourses';
 import { PopularCareers } from './PopularCareers';
@@ -6,16 +6,14 @@ import { SkipSubject } from './SkipSubject';
 import { Section } from './Section';
 import { DREAMER_DATA } from '../dreamerData';
 
-export const PrintPreview: React.FC = () => {
-    const [config, setConfig] = useState({ includeArchitect: true, includeBuilder: false, includeDreamer: false });
+export const PrintPreview = forwardRef<HTMLDivElement, { config?: { includeArchitect: boolean, includeBuilder: boolean, includeDreamer: boolean } }>((props, ref) => {
     const [architectData, setArchitectData] = useState<any>(null);
     const [builderData, setBuilderData] = useState<any>(null);
     const [dreamerData, setDreamerData] = useState<any>(null);
 
-    useEffect(() => {
-        const handleConfig = (e: any) => setConfig(e.detail);
-        window.addEventListener('nexus-print-config', handleConfig);
+    const config = props.config || { includeArchitect: true, includeBuilder: false, includeDreamer: false };
 
+    useEffect(() => {
         // Load data from localStorage
         const arch = localStorage.getItem('architect_state');
         if (arch) setArchitectData(JSON.parse(arch));
@@ -34,12 +32,10 @@ export const PrintPreview: React.FC = () => {
                 }
             }
         }
-
-        return () => window.removeEventListener('nexus-print-config', handleConfig);
-    }, []);
+    }, [props.config]);
 
     return (
-        <div id="print-preview" className="hidden print:block p-8 bg-white text-slate-900">
+        <div ref={ref} id="print-preview" className="p-12 bg-white text-slate-900 min-h-screen">
             <div className="mb-12 border-b-4 border-indigo-600 pb-6">
                 <h1 className="text-4xl font-black tracking-tighter uppercase">A-Level <span className="text-indigo-600">Nexus</span> Report</h1>
                 <p className="text-sm font-bold text-slate-500 mt-2 uppercase tracking-widest">Generated on {new Date().toLocaleDateString()}</p>
@@ -47,9 +43,9 @@ export const PrintPreview: React.FC = () => {
 
             {config.includeArchitect && architectData?.analysisResult && (
                 <div className="space-y-12 mb-20">
-                    <div className="p-4 bg-indigo-50 rounded-xl border border-indigo-100 mb-8">
+                    <div className="p-6 bg-indigo-50 rounded-2xl border border-indigo-100 mb-8">
                         <h2 className="text-2xl font-black text-indigo-900 uppercase tracking-tight mb-4">The Architect: Subject Analysis</h2>
-                        <div className="flex gap-2">
+                        <div className="flex flex-wrap gap-2">
                             {architectData.subjects.filter((s: string) => s).map((s: string, i: number) => (
                                 <span key={i} className="px-3 py-1 bg-white text-indigo-700 text-xs font-bold rounded shadow-sm border border-indigo-100">
                                     {s}
@@ -92,7 +88,7 @@ export const PrintPreview: React.FC = () => {
             {config.includeBuilder && builderData?.courses?.length > 0 && (
                 <div className="space-y-12 mb-20">
                     <div className="page-break" />
-                    <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100 mb-8">
+                    <div className="p-6 bg-emerald-50 rounded-2xl border border-emerald-100 mb-8">
                         <h2 className="text-2xl font-black text-emerald-900 uppercase tracking-tight mb-4">The Builder: Degree Construction</h2>
                         <div className="flex flex-wrap gap-4 text-sm font-bold">
                             <div className="flex flex-col">
@@ -148,7 +144,7 @@ export const PrintPreview: React.FC = () => {
             {config.includeDreamer && dreamerData?.selectedCourse && (
                 <div className="space-y-12 mb-20">
                     <div className="page-break" />
-                    <div className="p-4 bg-purple-50 rounded-xl border border-purple-100 mb-8">
+                    <div className="p-6 bg-purple-50 rounded-2xl border border-purple-100 mb-8">
                         <h2 className="text-2xl font-black text-purple-900 uppercase tracking-tight mb-4">The Dreamer: Career Vision</h2>
                         <p className="text-sm font-bold text-purple-600 uppercase tracking-widest">{dreamerData.selectedCourse.title}</p>
                     </div>
@@ -184,14 +180,19 @@ export const PrintPreview: React.FC = () => {
 
                             <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
                                 <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Career Pathways</h4>
-                                <ul className="space-y-2">
-                                    {dreamerData.selectedCourse.careers.map((item: string, i: number) => (
-                                        <li key={i} className="text-sm text-slate-600 flex items-start gap-2">
-                                            <span className="text-purple-500 mt-1">•</span>
-                                            {item}
-                                        </li>
+                                <div className="space-y-4">
+                                    {dreamerData.selectedCourse.careers.map((item: any, i: number) => (
+                                        <div key={i} className="text-sm">
+                                            <p className="font-bold text-slate-900 flex items-center gap-2">
+                                                <span className="text-purple-500">•</span>
+                                                {item.name}
+                                            </p>
+                                            <p className="text-slate-500 text-xs mt-1 ml-4 leading-relaxed">
+                                                {item.description}
+                                            </p>
+                                        </div>
                                     ))}
-                                </ul>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -209,4 +210,6 @@ export const PrintPreview: React.FC = () => {
             </style>
         </div>
     );
-};
+});
+
+PrintPreview.displayName = 'PrintPreview';

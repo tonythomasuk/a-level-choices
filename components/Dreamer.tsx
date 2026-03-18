@@ -1,15 +1,20 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { Search, Loader2, Briefcase } from 'lucide-react';
 import { DREAMER_DATA } from '../dreamerData';
 import { DreamerWorld, DreamerCourse } from '../types';
+import { mapCareerToDreamerCourse } from '../services/geminiService';
 
 interface DreamerProps {
     onBack: () => void;
+    onUseSubjectsInArchitect: (subjects: string[]) => void;
 }
 
-export const Dreamer: React.FC<DreamerProps> = ({ onBack }) => {
+export const Dreamer: React.FC<DreamerProps> = ({ onBack, onUseSubjectsInArchitect }) => {
     const [selectedWorld, setSelectedWorld] = useState<DreamerWorld | null>(null);
     const [selectedCourse, setSelectedCourse] = useState<DreamerCourse | null>(null);
+    const [searchQuery, setSearchQuery] = useState('');
+    const [isSearching, setIsSearching] = useState(false);
 
     // Load state from localStorage on mount
     useEffect(() => {
@@ -51,6 +56,28 @@ export const Dreamer: React.FC<DreamerProps> = ({ onBack }) => {
         setSelectedCourse(course);
     };
 
+    const handleSearch = async () => {
+        if (!searchQuery.trim()) return;
+        setIsSearching(true);
+        try {
+            const result = await mapCareerToDreamerCourse(searchQuery, DREAMER_DATA);
+            if (result) {
+                const world = DREAMER_DATA.find(w => w.id === result.worldId);
+                if (world) {
+                    const course = world.courses.find(c => c.title === result.courseTitle);
+                    if (course) {
+                        setSelectedWorld(world);
+                        setSelectedCourse(course);
+                    }
+                }
+            }
+        } catch (error) {
+            console.error("Search failed:", error);
+        } finally {
+            setIsSearching(false);
+        }
+    };
+
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 pb-24">
             <main className="container mx-auto max-w-5xl p-6">
@@ -61,29 +88,67 @@ export const Dreamer: React.FC<DreamerProps> = ({ onBack }) => {
                             animate={{ opacity: 1, y: 0 }}
                             className="text-center mb-12"
                         >
-                            <h2 className="text-4xl font-black text-slate-900 mb-4 tracking-tight">Discovery</h2>
-                            <p className="text-slate-500 text-lg font-medium">Select a major subject area to begin your journey.</p>
+                            <h2 className="text-4xl font-black text-slate-900 mb-4 tracking-tight">The Dreamer</h2>
+                            <p className="text-slate-500 text-lg font-medium">Don't start with subjects. Start with the world you want to build.</p>
                         </motion.div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                            {DREAMER_DATA.map((world, index) => (
-                                <motion.div
-                                    key={world.id}
-                                    initial={{ opacity: 0, y: 20 }}
-                                    animate={{ opacity: 1, y: 0 }}
-                                    transition={{ delay: index * 0.05 }}
-                                    whileHover={{ scale: 1.03, translateY: -5 }}
-                                    whileTap={{ scale: 0.98 }}
-                                    onClick={() => handleWorldSelect(world)}
-                                    className="cursor-pointer bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-purple-500/30 transition-all group"
+                        {/* Search Section */}
+                        <div className="bg-white p-8 rounded-3xl shadow-sm border border-purple-100 mb-12 space-y-6">
+                            <div className="space-y-2">
+                                <h2 className="text-lg font-bold text-slate-900">Got a specific dream?</h2>
+                                <p className="text-sm text-slate-500 italic">
+                                    Try: "I want to build space stations" or "I want to solve global hunger"
+                                </p>
+                            </div>
+                            <div className="flex flex-col sm:flex-row gap-3">
+                                <div className="relative flex-1">
+                                    <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={20} />
+                                    <input
+                                        type="text"
+                                        value={searchQuery}
+                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                                        placeholder="Enter a job, career, or dream..."
+                                        className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all font-medium"
+                                    />
+                                </div>
+                                <button
+                                    onClick={handleSearch}
+                                    disabled={isSearching || !searchQuery.trim()}
+                                    className="px-8 py-4 bg-purple-600 text-white rounded-2xl font-bold hover:bg-purple-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg shadow-purple-200"
                                 >
-                                    <div className="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-purple-600 group-hover:text-white transition-colors">
-                                        <span className="text-xl font-black">{index + 1}</span>
-                                    </div>
-                                    <h3 className="text-xl font-black text-slate-900 mb-2">{world.world_name}</h3>
-                                    <p className="text-slate-500 text-sm font-medium leading-relaxed">{world.description}</p>
-                                </motion.div>
-                            ))}
+                                    {isSearching ? <Loader2 className="animate-spin" size={20} /> : 'Check this out'}
+                                </button>
+                            </div>
+                        </div>
+
+                        <div className="space-y-8">
+                            <div className="flex items-center gap-4">
+                                <div className="h-px flex-1 bg-slate-200" />
+                                <h2 className="text-xs font-black text-slate-400 uppercase tracking-widest">The Big 10: Vibe Check</h2>
+                                <div className="h-px flex-1 bg-slate-200" />
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                {DREAMER_DATA.map((world, index) => (
+                                    <motion.div
+                                        key={world.id}
+                                        initial={{ opacity: 0, y: 20 }}
+                                        animate={{ opacity: 1, y: 0 }}
+                                        transition={{ delay: index * 0.05 }}
+                                        whileHover={{ scale: 1.03, translateY: -5 }}
+                                        whileTap={{ scale: 0.98 }}
+                                        onClick={() => handleWorldSelect(world)}
+                                        className="cursor-pointer bg-white p-6 rounded-3xl border border-slate-200 shadow-sm hover:shadow-xl hover:border-purple-500/30 transition-all group"
+                                    >
+                                        <div className="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-purple-600 group-hover:text-white transition-colors">
+                                            <span className="text-xl font-black">{index + 1}</span>
+                                        </div>
+                                        <h3 className="text-xl font-black text-slate-900 mb-2">{world.world_name}</h3>
+                                        <p className="text-slate-500 text-sm font-medium leading-relaxed">{world.description}</p>
+                                    </motion.div>
+                                ))}
+                            </div>
                         </div>
                     </div>
                 ) : (
@@ -135,14 +200,16 @@ export const Dreamer: React.FC<DreamerProps> = ({ onBack }) => {
                                                 <h3 className="text-xs font-black text-slate-400 uppercase tracking-[0.2em] mb-6">Day in the Life</h3>
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                                     {selectedCourse.careers.map((career) => (
-                                                        <div key={career} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                                                            <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center mb-4">
-                                                                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                                                                </svg>
+                                                        <div key={career.name} className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm flex flex-col gap-3">
+                                                            <div className="flex items-center gap-3">
+                                                                <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center shrink-0">
+                                                                    <Briefcase size={20} className="text-indigo-600" />
+                                                                </div>
+                                                                <h4 className="font-bold text-slate-900">{career.name}</h4>
                                                             </div>
-                                                            <h4 className="font-black text-xl text-slate-900 mb-2">{career}</h4>
-                                                            <p className="text-slate-500 text-sm font-medium">Building the future of {selectedCourse.title.toLowerCase()}.</p>
+                                                            <p className="text-sm text-slate-500 font-medium leading-relaxed pl-[3.25rem]">
+                                                                {career.description}
+                                                            </p>
                                                         </div>
                                                     ))}
                                                 </div>
@@ -206,6 +273,23 @@ export const Dreamer: React.FC<DreamerProps> = ({ onBack }) => {
                                                                 </div>
                                                             </div>
                                                         </div>
+                                                    </div>
+
+                                                    {/* Action Button */}
+                                                    <div className="mt-12 pt-8 border-t border-white/10 flex flex-col items-center gap-4">
+                                                        <p className="text-sm text-slate-400 font-medium">Ready to see how these subjects stack up?</p>
+                                                        <button
+                                                            onClick={() => {
+                                                                const allSubjects = [
+                                                                    ...selectedCourse.a_level.mandatory,
+                                                                    ...selectedCourse.a_level.helpful
+                                                                ].slice(0, 4);
+                                                                onUseSubjectsInArchitect(allSubjects);
+                                                            }}
+                                                            className="px-8 py-4 bg-white text-slate-900 font-black text-sm uppercase tracking-widest rounded-full hover:bg-purple-100 transition-all transform hover:scale-105 active:scale-95 shadow-xl shadow-black/20"
+                                                        >
+                                                            Analyze these subjects in The Architect →
+                                                        </button>
                                                     </div>
                                                 </div>
                                             </section>

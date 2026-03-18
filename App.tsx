@@ -64,11 +64,26 @@ const App: React.FC = () => {
         setView('architect');
     };
 
+    const handleUseSubjectsInArchitect = (selectedSubjects: string[]) => {
+        const subjects: [string, string, string, string] = ['', '', '', ''];
+        selectedSubjects.forEach((s, i) => {
+            if (i < 4) subjects[i] = s;
+        });
+        setArchitectInitialSubjects(subjects);
+        setView('architect');
+    };
+
+    const handleNavigate = (newView: View) => {
+        if (newView !== 'architect') {
+            setArchitectInitialSubjects(undefined);
+        }
+        setView(newView);
+    };
+
     return (
         <div className="min-h-screen bg-white selection:bg-indigo-100 selection:text-indigo-900">
-            <PrintPreview />
             {view !== 'nexus' && (
-                <GlobalNav currentView={view} onNavigate={setView} />
+                <GlobalNav currentView={view} onNavigate={handleNavigate} />
             )}
             
             <AnimatePresence mode="wait">
@@ -97,7 +112,7 @@ const App: React.FC = () => {
                     >
                         <Architect 
                             initialSubjects={architectInitialSubjects}
-                            onBack={() => setView('nexus')}
+                            onBack={() => handleNavigate('nexus')}
                         />
                         <Footer />
                     </motion.div>
@@ -111,7 +126,7 @@ const App: React.FC = () => {
                         exit={{ opacity: 0, x: -20 }}
                     >
                         <Builder 
-                            onBack={() => setView('nexus')}
+                            onBack={() => handleNavigate('nexus')}
                         />
                         <Footer />
                     </motion.div>
@@ -125,7 +140,8 @@ const App: React.FC = () => {
                         exit={{ opacity: 0, x: -20 }}
                     >
                         <Dreamer 
-                            onBack={() => setView('nexus')}
+                            onBack={() => handleNavigate('nexus')}
+                            onUseSubjectsInArchitect={handleUseSubjectsInArchitect}
                         />
                         <Footer />
                     </motion.div>

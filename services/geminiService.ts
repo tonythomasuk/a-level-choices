@@ -300,3 +300,45 @@ export const generateSkipInfo = async (subjects: string[]): Promise<SkipSubjectI
         }));
     }
 };
+
+export const mapCareerToDreamerCourse = async (careerInput: string, worlds: any[]): Promise<{ worldId: string, courseTitle: string } | null> => {
+    const ai = getAIClient();
+    const worldsInfo = worlds.map(w => ({
+        id: w.id,
+        name: w.world_name,
+        courses: w.courses.map(c => c.title)
+    }));
+
+    const prompt = `
+        You are a career mapping expert.
+        A student says: "${careerInput}".
+        Map this interest to the most relevant "World" and "Course" from the following list:
+        ${JSON.stringify(worldsInfo)}
+        
+        Return ONLY a JSON object with "worldId" and "courseTitle". If no reasonable match exists, return null.
+    `;
+
+    const response = await ai.models.generateContent({
+        model: "gemini-3-flash-preview",
+        contents: prompt,
+        config: {
+            responseMimeType: "application/json",
+            responseSchema: {
+                type: Type.OBJECT,
+                properties: {
+                    worldId: { type: Type.STRING },
+                    courseTitle: { type: Type.STRING }
+                },
+                required: ["worldId", "courseTitle"]
+            }
+        },
+    });
+
+    const jsonText = response.text.trim();
+    try {
+        return JSON.parse(jsonText);
+    } catch (e) {
+        console.error("Failed to parse career mapping:", jsonText);
+        return null;
+    }
+};

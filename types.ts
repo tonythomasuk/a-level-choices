@@ -56,9 +56,14 @@ export interface DreamerWorld {
     courses: DreamerCourse[];
 }
 
+export interface DreamerCareer {
+    name: string;
+    description: string;
+}
+
 export interface DreamerCourse {
     title: string;
-    careers: string[];
+    careers: DreamerCareer[];
     gcse: {
         mandatory: string[];
         helpful: string[];
