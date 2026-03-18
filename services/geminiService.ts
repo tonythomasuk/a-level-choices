@@ -1,4 +1,4 @@
-import { GoogleGenAI, Type } from "@google/genai";
+import { GoogleGenAI, Type, ThinkingLevel } from "@google/genai";
 import type { BaseAnalysis, UniversityCourse, SkipSubjectInfo, BuilderCourse } from '../types';
 
 // Commented out to replace with Vercel flexibility
@@ -89,12 +89,12 @@ export const generateInitialAnalysis = async (subjects: string[]): Promise<BaseA
     `;
 
     const response = await ai.models.generateContent({
-        model: "gemini-2.5-pro",
+        model: "gemini-3.1-pro-preview",
         contents: prompt,
         config: {
             responseMimeType: "application/json",
             responseSchema: baseAnalysisSchema,
-            thinkingConfig: { thinkingBudget: 32768 }
+            thinkingConfig: { thinkingLevel: ThinkingLevel.LOW }
         },
     });
 
@@ -158,12 +158,11 @@ export const generateBuilderCourses = async (major: string, minors: string[], ta
     };
 
     const response = await ai.models.generateContent({
-        model: "gemini-2.5-pro",
+        model: "gemini-3-flash-preview",
         contents: prompt,
         config: {
             responseMimeType: "application/json",
-            responseSchema: builderSchema,
-            thinkingConfig: { thinkingBudget: 32768 }
+            responseSchema: builderSchema
         },
     });
 
@@ -215,12 +214,11 @@ export const generateUniversityCourses = async (subjects: string[], university: 
     };
 
     const response = await ai.models.generateContent({
-        model: "gemini-2.5-pro",
+        model: "gemini-3-flash-preview",
         contents: prompt,
         config: {
             responseMimeType: "application/json",
-            responseSchema: courseSchema,
-            thinkingConfig: { thinkingBudget: 32768 }
+            responseSchema: courseSchema
         },
     });
 
@@ -244,11 +242,8 @@ export const generateWhatIfStory = async (originalSubjects: string[], newCombina
     `;
 
     const response = await ai.models.generateContent({
-        model: "gemini-2.5-pro",
-        contents: prompt,
-        config: {
-             thinkingConfig: { thinkingBudget: 32768 }
-        }
+        model: "gemini-3-flash-preview",
+        contents: prompt
     });
     return response.text;
 };
@@ -279,12 +274,11 @@ export const generateSkipInfo = async (subjects: string[]): Promise<SkipSubjectI
     };
 
     const response = await ai.models.generateContent({
-        model: 'gemini-2.5-pro',
+        model: 'gemini-3-flash-preview',
         contents: prompt,
         config: {
             responseMimeType: 'application/json',
-            responseSchema: skipSchema,
-            thinkingConfig: { thinkingBudget: 32768 }
+            responseSchema: skipSchema
         }
     });
 

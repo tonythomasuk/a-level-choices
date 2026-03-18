@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Search, Loader2, Briefcase } from 'lucide-react';
 import { DREAMER_DATA } from '../dreamerData';
@@ -7,14 +7,30 @@ import { mapCareerToDreamerCourse } from '../services/geminiService';
 
 interface DreamerProps {
     onBack: () => void;
-    onUseSubjectsInArchitect: (subjects: string[]) => void;
 }
 
-export const Dreamer: React.FC<DreamerProps> = ({ onBack, onUseSubjectsInArchitect }) => {
+export const Dreamer: React.FC<DreamerProps> = ({ onBack }) => {
     const [selectedWorld, setSelectedWorld] = useState<DreamerWorld | null>(null);
     const [selectedCourse, setSelectedCourse] = useState<DreamerCourse | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearching, setIsSearching] = useState(false);
+
+    // Memoize filtered worlds for performance
+    const filteredWorlds = useMemo(() => {
+        if (!searchQuery.trim()) return DREAMER_DATA;
+        const query = searchQuery.toLowerCase();
+        return DREAMER_DATA.filter(world => 
+            world.world_name.toLowerCase().includes(query) ||
+            world.description.toLowerCase().includes(query) ||
+            world.courses.some(course => 
+                course.title.toLowerCase().includes(query) ||
+                course.careers.some(career => 
+                    career.name.toLowerCase().includes(query) ||
+                    career.description.toLowerCase().includes(query)
+                )
+            )
+        );
+    }, [searchQuery]);
 
     // Load state from localStorage on mount
     useEffect(() => {
@@ -273,23 +289,6 @@ export const Dreamer: React.FC<DreamerProps> = ({ onBack, onUseSubjectsInArchite
                                                                 </div>
                                                             </div>
                                                         </div>
-                                                    </div>
-
-                                                    {/* Action Button */}
-                                                    <div className="mt-12 pt-8 border-t border-white/10 flex flex-col items-center gap-4">
-                                                        <p className="text-sm text-slate-400 font-medium">Ready to see how these subjects stack up?</p>
-                                                        <button
-                                                            onClick={() => {
-                                                                const allSubjects = [
-                                                                    ...selectedCourse.a_level.mandatory,
-                                                                    ...selectedCourse.a_level.helpful
-                                                                ].slice(0, 4);
-                                                                onUseSubjectsInArchitect(allSubjects);
-                                                            }}
-                                                            className="px-8 py-4 bg-white text-slate-900 font-black text-sm uppercase tracking-widest rounded-full hover:bg-purple-100 transition-all transform hover:scale-105 active:scale-95 shadow-xl shadow-black/20"
-                                                        >
-                                                            Analyze these subjects in The Architect →
-                                                        </button>
                                                     </div>
                                                 </div>
                                             </section>

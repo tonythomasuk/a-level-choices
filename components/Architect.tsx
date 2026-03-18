@@ -14,7 +14,6 @@ import type { AnalysisResult, UniversityCourse, SkipSubjectInfo } from '../types
 import { A_LEVEL_SUBJECTS } from '../constants';
 
 interface ArchitectProps {
-    initialSubjects?: [string, string, string, string];
     onBack: () => void;
 }
 
@@ -39,7 +38,16 @@ const StickySummary: React.FC<{ subjects: string[] }> = ({ subjects }) => {
     const [isScrolled, setIsScrolled] = useState(false);
 
     useEffect(() => {
-        const handleScroll = () => setIsScrolled(window.scrollY > 400);
+        let ticking = false;
+        const handleScroll = () => {
+            if (!ticking) {
+                window.requestAnimationFrame(() => {
+                    setIsScrolled(window.scrollY > 400);
+                    ticking = false;
+                });
+                ticking = true;
+            }
+        };
         window.addEventListener('scroll', handleScroll);
         return () => window.removeEventListener('scroll', handleScroll);
     }, []);
@@ -77,7 +85,7 @@ const StickySummary: React.FC<{ subjects: string[] }> = ({ subjects }) => {
     );
 };
 
-export const Architect: React.FC<ArchitectProps> = ({ initialSubjects: propInitialSubjects, onBack }) => {
+export const Architect: React.FC<ArchitectProps> = ({ onBack }) => {
     const [subjects, setSubjects] = useState<[string, string, string, string]>(['', '', '', '']);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -140,18 +148,6 @@ export const Architect: React.FC<ArchitectProps> = ({ initialSubjects: propIniti
     useEffect(() => {
         const saved = localStorage.getItem('architect_state');
         
-        // If we have propInitialSubjects, it takes precedence
-        if (propInitialSubjects) {
-            setSubjects(propInitialSubjects);
-            const validCount = propInitialSubjects.filter(s => s.trim() !== '').length;
-            if (validCount >= 3) {
-                handleExplore(propInitialSubjects);
-            } else {
-                setError(`Please select at least ${3 - validCount} more subject(s) to complete the analysis.`);
-            }
-            return;
-        }
-
         if (saved) {
             try {
                 const parsed = JSON.parse(saved);
@@ -166,7 +162,7 @@ export const Architect: React.FC<ArchitectProps> = ({ initialSubjects: propIniti
         } else {
             setSubjects(randomInitialSubjects);
         }
-    }, [propInitialSubjects, randomInitialSubjects, handleExplore]);
+    }, [randomInitialSubjects]);
 
     // Save state to localStorage whenever it changes
     useEffect(() => {

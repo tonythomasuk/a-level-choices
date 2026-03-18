@@ -14,7 +14,6 @@ type View = 'nexus' | 'architect' | 'dreamer' | 'builder';
 
 const App: React.FC = () => {
     const [view, setView] = useState<View>('nexus');
-    const [architectInitialSubjects, setArchitectInitialSubjects] = useState<[string, string, string, string] | undefined>(undefined);
 
     // Persistence logic
     useEffect(() => {
@@ -59,23 +58,11 @@ const App: React.FC = () => {
             count++;
         }
 
-        setArchitectInitialSubjects(subjects);
-        setView('architect');
-    };
-
-    const handleUseSubjectsInArchitect = (selectedSubjects: string[]) => {
-        const subjects: [string, string, string, string] = ['', '', '', ''];
-        selectedSubjects.forEach((s, i) => {
-            if (i < 4) subjects[i] = s;
-        });
-        setArchitectInitialSubjects(subjects);
+        // We'll just set the view to architect and let it handle its own state
         setView('architect');
     };
 
     const handleNavigate = (newView: View) => {
-        if (newView !== 'architect') {
-            setArchitectInitialSubjects(undefined);
-        }
         if (newView === 'dreamer') {
             localStorage.removeItem('dreamer_state');
         }
@@ -113,10 +100,8 @@ const App: React.FC = () => {
                         exit={{ opacity: 0, x: -20 }}
                     >
                         <Architect 
-                            initialSubjects={architectInitialSubjects}
                             onBack={() => handleNavigate('nexus')}
                         />
-                        <Footer />
                     </motion.div>
                 )}
 
@@ -130,7 +115,6 @@ const App: React.FC = () => {
                         <Builder 
                             onBack={() => handleNavigate('nexus')}
                         />
-                        <Footer />
                     </motion.div>
                 )}
 
@@ -143,12 +127,11 @@ const App: React.FC = () => {
                     >
                         <Dreamer 
                             onBack={() => handleNavigate('nexus')}
-                            onUseSubjectsInArchitect={handleUseSubjectsInArchitect}
                         />
-                        <Footer />
                     </motion.div>
                 )}
             </AnimatePresence>
+            <Footer />
         </div>
     );
 };
