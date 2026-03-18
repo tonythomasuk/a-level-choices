@@ -27,16 +27,15 @@ const App: React.FC = () => {
     }, [view]);
 
     const handleSelectArchitect = () => {
-        setArchitectInitialSubjects(undefined);
-        setView('architect');
+        handleNavigate('architect');
     };
 
     const handleSelectBuilder = () => {
-        setView('builder');
+        handleNavigate('builder');
     };
 
     const handleSelectDreamer = () => {
-        setView('dreamer');
+        handleNavigate('dreamer');
     };
 
     const handleSelectChaos = () => {
@@ -76,6 +75,9 @@ const App: React.FC = () => {
     const handleNavigate = (newView: View) => {
         if (newView !== 'architect') {
             setArchitectInitialSubjects(undefined);
+        }
+        if (newView === 'dreamer') {
+            localStorage.removeItem('dreamer_state');
         }
         setView(newView);
     };

@@ -87,7 +87,7 @@ export const PrintPreview = forwardRef<HTMLDivElement, { config?: { includeArchi
 
             {config.includeBuilder && builderData?.courses?.length > 0 && (
                 <div className="space-y-12 mb-20">
-                    <div className="page-break" />
+                    {config.includeArchitect && architectData?.analysisResult && <div className="page-break" />}
                     <div className="p-6 bg-emerald-50 rounded-2xl border border-emerald-100 mb-8">
                         <h2 className="text-2xl font-black text-emerald-900 uppercase tracking-tight mb-4">The Builder: Degree Construction</h2>
                         <div className="flex flex-wrap gap-4 text-sm font-bold">
@@ -143,7 +143,7 @@ export const PrintPreview = forwardRef<HTMLDivElement, { config?: { includeArchi
 
             {config.includeDreamer && dreamerData?.selectedCourse && (
                 <div className="space-y-12 mb-20">
-                    <div className="page-break" />
+                    {( (config.includeArchitect && architectData?.analysisResult) || (config.includeBuilder && builderData?.courses?.length > 0) ) && <div className="page-break" />}
                     <div className="p-6 bg-purple-50 rounded-2xl border border-purple-100 mb-8">
                         <h2 className="text-2xl font-black text-purple-900 uppercase tracking-tight mb-4">The Dreamer: Career Vision</h2>
                         <p className="text-sm font-bold text-purple-600 uppercase tracking-widest">{dreamerData.selectedCourse.title}</p>

@@ -140,10 +140,15 @@ export const Architect: React.FC<ArchitectProps> = ({ initialSubjects: propIniti
     useEffect(() => {
         const saved = localStorage.getItem('architect_state');
         
-        // If we have propInitialSubjects, it takes precedence and triggers analysis
+        // If we have propInitialSubjects, it takes precedence
         if (propInitialSubjects) {
             setSubjects(propInitialSubjects);
-            handleExplore(propInitialSubjects);
+            const validCount = propInitialSubjects.filter(s => s.trim() !== '').length;
+            if (validCount >= 3) {
+                handleExplore(propInitialSubjects);
+            } else {
+                setError(`Please select at least ${3 - validCount} more subject(s) to complete the analysis.`);
+            }
             return;
         }
 
@@ -182,7 +187,7 @@ export const Architect: React.FC<ArchitectProps> = ({ initialSubjects: propIniti
     };
 
     return (
-        <div className="min-h-screen bg-white">
+        <div className="min-h-screen bg-slate-50">
             <StickySummary subjects={subjects.filter(s => s)} />
             
             <main className="container mx-auto max-w-4xl p-4 md:p-8 pb-24">
