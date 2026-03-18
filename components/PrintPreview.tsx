@@ -41,109 +41,8 @@ export const PrintPreview = forwardRef<HTMLDivElement, { config?: { includeArchi
                 <p className="text-sm font-bold text-slate-500 mt-2 uppercase tracking-widest">Generated on {new Date().toLocaleDateString()}</p>
             </div>
 
-            {config.includeArchitect && architectData?.analysisResult && (
-                <div className="space-y-12 mb-20">
-                    <div className="p-6 bg-indigo-50 rounded-2xl border border-indigo-100 mb-8">
-                        <h2 className="text-2xl font-black text-indigo-900 uppercase tracking-tight mb-4">The Architect: Subject Analysis</h2>
-                        <div className="flex flex-wrap gap-2">
-                            {architectData.subjects.filter((s: string) => s).map((s: string, i: number) => (
-                                <span key={i} className="px-3 py-1 bg-white text-indigo-700 text-xs font-bold rounded shadow-sm border border-indigo-100">
-                                    {s}
-                                </span>
-                            ))}
-                        </div>
-                    </div>
-
-                    <Section title="Your Future Story">
-                        <FutureStory story={architectData.analysisResult.futureStory} />
-                    </Section>
-
-                    <div className="page-break" />
-
-                    <Section title="University Courses">
-                        <div className="grid grid-cols-1 gap-4">
-                            {architectData.analysisResult.universityCourses.map((course: any, i: number) => (
-                                <div key={i} className="p-4 border border-slate-200 rounded-lg">
-                                    <h3 className="font-bold text-indigo-600">{course.courseName}</h3>
-                                    <p className="text-xs text-slate-500 mb-2">{course.universityName}</p>
-                                    <p className="text-sm">{course.matchingExplanation}</p>
-                                </div>
-                            ))}
-                        </div>
-                    </Section>
-
-                    <Section title="Careers & Earning Potential">
-                        <PopularCareers 
-                            careers={architectData.analysisResult.popularCareers} 
-                            earningPotential={architectData.analysisResult.earningPotential}
-                        />
-                    </Section>
-
-                    <Section title="Entry Flexibility">
-                        <SkipSubject info={architectData.skipInfo} />
-                    </Section>
-                </div>
-            )}
-
-            {config.includeBuilder && builderData?.courses?.length > 0 && (
-                <div className="space-y-12 mb-20">
-                    {config.includeArchitect && architectData?.analysisResult && <div className="page-break" />}
-                    <div className="p-6 bg-emerald-50 rounded-2xl border border-emerald-100 mb-8">
-                        <h2 className="text-2xl font-black text-emerald-900 uppercase tracking-tight mb-4">The Builder: Degree Construction</h2>
-                        <div className="flex flex-wrap gap-4 text-sm font-bold">
-                            <div className="flex flex-col">
-                                <span className="text-[10px] text-emerald-600 uppercase">Major</span>
-                                <span>{builderData.major}</span>
-                            </div>
-                            {builderData.minor1 && (
-                                <div className="flex flex-col">
-                                    <span className="text-[10px] text-emerald-600 uppercase">Minor 1</span>
-                                    <span>{builderData.minor1}</span>
-                                </div>
-                            )}
-                            {builderData.minor2 && (
-                                <div className="flex flex-col">
-                                    <span className="text-[10px] text-emerald-600 uppercase">Minor 2</span>
-                                    <span>{builderData.minor2}</span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 gap-6">
-                        {builderData.courses.map((course: any, i: number) => (
-                            <div key={i} className="p-6 border border-slate-200 rounded-2xl">
-                                <div className="flex justify-between items-start mb-4">
-                                    <div>
-                                        <h3 className="text-xl font-black text-slate-900">{course.title}</h3>
-                                        <p className="text-emerald-600 font-bold">{course.university}</p>
-                                    </div>
-                                </div>
-                                <p className="text-slate-600 text-sm leading-relaxed mb-6">{course.specialConditions}</p>
-                                <div className="bg-slate-50 p-4 rounded-xl">
-                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Ideal A-Levels</p>
-                                    <div className="flex flex-wrap gap-2">
-                                        {course.a_level.mandatory.map((sub: string, idx: number) => (
-                                            <span key={idx} className="px-2 py-1 bg-white text-slate-700 text-[10px] font-bold rounded border border-slate-200">
-                                                {sub} (Mandatory)
-                                            </span>
-                                        ))}
-                                        {course.a_level.helpful.map((sub: string, idx: number) => (
-                                            <span key={idx} className="px-2 py-1 bg-white text-slate-400 text-[10px] font-bold rounded border border-slate-200">
-                                                {sub} (Helpful)
-                                            </span>
-                                        ))}
-                                    </div>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
-                </div>
-            )}
-
             {config.includeDreamer && dreamerData?.selectedCourse && (
                 <div className="space-y-12 mb-20">
-                    {( (config.includeArchitect && architectData?.analysisResult) || (config.includeBuilder && builderData?.courses?.length > 0) ) && <div className="page-break" />}
                     <div className="p-6 bg-purple-50 rounded-2xl border border-purple-100 mb-8">
                         <h2 className="text-2xl font-black text-purple-900 uppercase tracking-tight mb-4">The Dreamer: Career Vision</h2>
                         <p className="text-sm font-bold text-purple-600 uppercase tracking-widest">{dreamerData.selectedCourse.title}</p>
@@ -195,6 +94,107 @@ export const PrintPreview = forwardRef<HTMLDivElement, { config?: { includeArchi
                                 </div>
                             </div>
                         </div>
+                    </div>
+                </div>
+            )}
+
+            {config.includeArchitect && architectData?.analysisResult && (
+                <div className="space-y-12 mb-20">
+                    {config.includeDreamer && dreamerData?.selectedCourse && <div className="page-break" />}
+                    <div className="p-6 bg-indigo-50 rounded-2xl border border-indigo-100 mb-8">
+                        <h2 className="text-2xl font-black text-indigo-900 uppercase tracking-tight mb-4">The Architect: Subject Analysis</h2>
+                        <div className="flex flex-wrap gap-2">
+                            {architectData.subjects.filter((s: string) => s).map((s: string, i: number) => (
+                                <span key={i} className="px-3 py-1 bg-white text-indigo-700 text-xs font-bold rounded shadow-sm border border-indigo-100">
+                                    {s}
+                                </span>
+                            ))}
+                        </div>
+                    </div>
+
+                    <Section title="Your Future Story">
+                        <FutureStory story={architectData.analysisResult.futureStory} />
+                    </Section>
+
+                    <div className="page-break" />
+
+                    <Section title="University Courses">
+                        <div className="grid grid-cols-1 gap-4">
+                            {architectData.analysisResult.universityCourses.map((course: any, i: number) => (
+                                <div key={i} className="p-4 border border-slate-200 rounded-lg">
+                                    <h3 className="font-bold text-indigo-600">{course.courseName}</h3>
+                                    <p className="text-xs text-slate-500 mb-2">{course.universityName}</p>
+                                    <p className="text-sm">{course.matchingExplanation}</p>
+                                </div>
+                            ))}
+                        </div>
+                    </Section>
+
+                    <Section title="Careers & Earning Potential">
+                        <PopularCareers 
+                            careers={architectData.analysisResult.popularCareers} 
+                            earningPotential={architectData.analysisResult.earningPotential}
+                        />
+                    </Section>
+
+                    <Section title="Entry Flexibility">
+                        <SkipSubject info={architectData.skipInfo} />
+                    </Section>
+                </div>
+            )}
+
+            {config.includeBuilder && builderData?.courses?.length > 0 && (
+                <div className="space-y-12 mb-20">
+                    {( (config.includeDreamer && dreamerData?.selectedCourse) || (config.includeArchitect && architectData?.analysisResult) ) && <div className="page-break" />}
+                    <div className="p-6 bg-emerald-50 rounded-2xl border border-emerald-100 mb-8">
+                        <h2 className="text-2xl font-black text-emerald-900 uppercase tracking-tight mb-4">The Builder: Degree Construction</h2>
+                        <div className="flex flex-wrap gap-4 text-sm font-bold">
+                            <div className="flex flex-col">
+                                <span className="text-[10px] text-emerald-600 uppercase">Major</span>
+                                <span>{builderData.major}</span>
+                            </div>
+                            {builderData.minor1 && (
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] text-emerald-600 uppercase">Minor 1</span>
+                                    <span>{builderData.minor1}</span>
+                                </div>
+                            )}
+                            {builderData.minor2 && (
+                                <div className="flex flex-col">
+                                    <span className="text-[10px] text-emerald-600 uppercase">Minor 2</span>
+                                    <span>{builderData.minor2}</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-6">
+                        {builderData.courses.map((course: any, i: number) => (
+                            <div key={i} className="p-6 border border-slate-200 rounded-2xl">
+                                <div className="flex justify-between items-start mb-4">
+                                    <div>
+                                        <h3 className="text-xl font-black text-slate-900">{course.title}</h3>
+                                        <p className="text-emerald-600 font-bold">{course.university}</p>
+                                    </div>
+                                </div>
+                                <p className="text-slate-600 text-sm leading-relaxed mb-6">{course.specialConditions}</p>
+                                <div className="bg-slate-50 p-4 rounded-xl">
+                                    <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Ideal A-Levels</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {course.a_level.mandatory.map((sub: string, idx: number) => (
+                                            <span key={idx} className="px-2 py-1 bg-white text-slate-700 text-[10px] font-bold rounded border border-slate-200">
+                                                {sub} (Mandatory)
+                                            </span>
+                                        ))}
+                                        {course.a_level.helpful.map((sub: string, idx: number) => (
+                                            <span key={idx} className="px-2 py-1 bg-white text-slate-400 text-[10px] font-bold rounded border border-slate-200">
+                                                {sub} (Helpful)
+                                            </span>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
                     </div>
                 </div>
             )}
