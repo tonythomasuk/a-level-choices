@@ -14,6 +14,7 @@ export const Dreamer: React.FC<DreamerProps> = ({ onBack }) => {
     const [selectedCourse, setSelectedCourse] = useState<DreamerCourse | null>(null);
     const [searchQuery, setSearchQuery] = useState('');
     const [isSearching, setIsSearching] = useState(false);
+    const [searchError, setSearchError] = useState('');
 
     // Memoize filtered worlds for performance
     const filteredWorlds = useMemo(() => {
@@ -75,20 +76,31 @@ export const Dreamer: React.FC<DreamerProps> = ({ onBack }) => {
     const handleSearch = async () => {
         if (!searchQuery.trim()) return;
         setIsSearching(true);
+        setSearchError('');
         try {
             const result = await mapCareerToDreamerCourse(searchQuery, DREAMER_DATA);
-            if (result) {
-                const world = DREAMER_DATA.find(w => w.id === result.worldId);
+            if (result && result.worldId) {
+                const world = DREAMER_DATA.find(w => 
+                    w.id === result.worldId || 
+                    w.world_name.toLowerCase() === result.worldId.toLowerCase()
+                );
                 if (world) {
-                    const course = world.courses.find(c => c.title === result.courseTitle);
+                    const course = world.courses.find(c => 
+                        c.title.toLowerCase() === result.courseTitle?.toLowerCase()
+                    );
+                    setSelectedWorld(world);
                     if (course) {
-                        setSelectedWorld(world);
                         setSelectedCourse(course);
                     }
+                } else {
+                    setSearchError("Couldn't find an exact match. Try exploring the worlds below!");
                 }
+            } else {
+                setSearchError("Couldn't find an exact match. Try exploring the worlds below!");
             }
         } catch (error) {
             console.error("Search failed:", error);
+            setSearchError("Oops, something went wrong. Please try again.");
         } finally {
             setIsSearching(false);
         }
@@ -122,7 +134,10 @@ export const Dreamer: React.FC<DreamerProps> = ({ onBack }) => {
                                     <input
                                         type="text"
                                         value={searchQuery}
-                                        onChange={(e) => setSearchQuery(e.target.value)}
+                                        onChange={(e) => {
+                                            setSearchQuery(e.target.value);
+                                            setSearchError('');
+                                        }}
                                         onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
                                         placeholder="Enter a job, career, or dream..."
                                         className="w-full pl-12 pr-4 py-4 bg-slate-50 border border-slate-200 rounded-2xl focus:ring-2 focus:ring-purple-500 focus:border-transparent outline-none transition-all font-medium"
@@ -136,6 +151,9 @@ export const Dreamer: React.FC<DreamerProps> = ({ onBack }) => {
                                     {isSearching ? <Loader2 className="animate-spin" size={20} /> : 'Check this out'}
                                 </button>
                             </div>
+                            {searchError && (
+                                <p className="text-red-500 text-sm font-medium mt-2">{searchError}</p>
+                            )}
                         </div>
 
                         <div className="space-y-8">
@@ -146,7 +164,7 @@ export const Dreamer: React.FC<DreamerProps> = ({ onBack }) => {
                             </div>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                                {DREAMER_DATA.map((world, index) => (
+                                {filteredWorlds.map((world, index) => (
                                     <motion.div
                                         key={world.id}
                                         initial={{ opacity: 0, y: 20 }}

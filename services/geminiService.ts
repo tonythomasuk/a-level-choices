@@ -293,7 +293,7 @@ export const mapCareerToDreamerCourse = async (careerInput: string, worlds: any[
         Map this interest to the most relevant "World" and "Course" from the following list:
         ${JSON.stringify(worldsInfo)}
         
-        Return ONLY a JSON object with "worldId" and "courseTitle". If no reasonable match exists, return null.
+        Return a JSON object with "worldId" and "courseTitle". If no reasonable match exists, return empty strings for both.
     `;
 
     const response = await ai.models.generateContent({
@@ -304,8 +304,8 @@ export const mapCareerToDreamerCourse = async (careerInput: string, worlds: any[
             responseSchema: {
                 type: Type.OBJECT,
                 properties: {
-                    worldId: { type: Type.STRING },
-                    courseTitle: { type: Type.STRING }
+                    worldId: { type: Type.STRING, description: "The ID of the matched world, or empty string if no match" },
+                    courseTitle: { type: Type.STRING, description: "The title of the matched course, or empty string if no match" }
                 },
                 required: ["worldId", "courseTitle"]
             }
