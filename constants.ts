@@ -21,3 +21,18 @@ export const RUSSELL_GROUP_UNIVERSITIES: string[] = [
     "University of Sheffield", "University of Southampton", "University College London", 
     "University of Warwick", "University of York"
 ];
+
+export const UNIVERSITY_SUBJECT_CATEGORIES: string[] = [
+    'Accounting', 'Aerospace Engineering', 'Ancient History', 'Anthropology', 'Archaeology', 
+    'Architecture', 'Art and Design', 'Biochemistry', 'Biology', 'Biomedical Science', 
+    'Business Studies', 'Chemical Engineering', 'Chemistry', 'Civil Engineering', 
+    'Classical Civilisation', 'Computer Science', 'Creative Writing', 'Criminology', 
+    'Dentistry', 'Drama and Theatre', 'Economics', 'Education', 'Electrical Engineering', 
+    'English Language', 'English Literature', 'Environmental Science', 'Film Studies', 
+    'Finance', 'French', 'Geography', 'Geology', 'German', 'History', 'History of Art', 
+    'International Relations', 'Italian', 'Law', 'Linguistics', 'Management', 'Marketing', 
+    'Mathematics', 'Mechanical Engineering', 'Media Studies', 'Medicine', 'Music', 
+    'Neuroscience', 'Nursing', 'Philosophy', 'Physics', 'Politics', 'Psychology', 
+    'Religious Studies', 'Social Policy', 'Sociology', 'Spanish', 'Statistics', 
+    'Veterinary Science', 'Zoology'
+];

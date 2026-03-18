@@ -48,3 +48,37 @@ export interface SkipSubjectInfo {
     canSkip: boolean;
     details: string;
 }
+
+export interface DreamerWorld {
+    id: string;
+    world_name: string;
+    description: string;
+    courses: DreamerCourse[];
+}
+
+export interface DreamerCourse {
+    title: string;
+    careers: string[];
+    gcse: {
+        mandatory: string[];
+        helpful: string[];
+    };
+    a_level: {
+        mandatory: string[];
+        helpful: string[];
+    };
+}
+
+export interface BuilderCourse {
+    title: string;
+    university: string;
+    a_level: {
+        mandatory: string[];
+        helpful: string[];
+    };
+    gcse: {
+        helpful: string[];
+    };
+    specialConditions: string;
+    url?: string;
+}

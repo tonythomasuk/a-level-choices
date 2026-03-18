@@ -1,5 +1,5 @@
 import { GoogleGenAI, Type } from "@google/genai";
-import type { BaseAnalysis, UniversityCourse, SkipSubjectInfo, BuilderCourse } from '../types';
+import type { BaseAnalysis, UniversityCourse, SkipSubjectInfo } from '../types';
 
 // Commented out to replace with Vercel flexibility
 //const getApiKey = (): string => {
@@ -104,75 +104,6 @@ export const generateInitialAnalysis = async (subjects: string[]): Promise<BaseA
     } catch (e) {
         console.error("Failed to parse JSON response:", jsonText);
         throw new Error("The AI returned an invalid response format.");
-    }
-};
-
-export const generateBuilderCourses = async (major: string, minors: string[], targetUniversities: string[] = []): Promise<BuilderCourse[]> => {
-    const ai = getAIClient();
-    const uniFilter = targetUniversities.length > 0 
-        ? `Prioritize searching for courses at these specific universities: ${targetUniversities.join(', ')}. If courses are available at these universities, include them first. `
-        : "";
-    const prompt = `
-        You are an expert UK university admissions advisor.
-        A student wants to study a combination of "${major}" as a major and "${minors.join(', ')}" as minors at a Russell Group university.
-        ${uniFilter}Search across the 24 Russell Group Universities and identify up to 10 undergraduate course titles featuring this particular combination (e.g., Joint Honours, Major/Minor, or single honours that heavily feature these subjects).
-        For each course, provide:
-        1. Course Title
-        2. University Name
-        3. Mandatory A-level subjects (subjects they MUST study)
-        4. Helpful A-level subjects (not required but beneficial)
-        5. Helpful GCSE subjects (not required but beneficial)
-        6. Any relevant special conditions (e.g., portfolios, interviews, specific grades in certain subjects).
-        7. A valid URL to the course page if possible.
-        
-        Return the data as a JSON array matching the specified schema.
-    `;
-    
-    const builderSchema = {
-        type: Type.ARRAY,
-        items: {
-            type: Type.OBJECT,
-            properties: {
-                title: { type: Type.STRING },
-                university: { type: Type.STRING },
-                a_level: {
-                    type: Type.OBJECT,
-                    properties: {
-                        mandatory: { type: Type.ARRAY, items: { type: Type.STRING } },
-                        helpful: { type: Type.ARRAY, items: { type: Type.STRING } }
-                    },
-                    required: ["mandatory", "helpful"]
-                },
-                gcse: {
-                    type: Type.OBJECT,
-                    properties: {
-                        helpful: { type: Type.ARRAY, items: { type: Type.STRING } }
-                    },
-                    required: ["helpful"]
-                },
-                specialConditions: { type: Type.STRING },
-                url: { type: Type.STRING }
-            },
-            required: ["title", "university", "a_level", "gcse", "specialConditions"]
-        }
-    };
-
-    const response = await ai.models.generateContent({
-        model: "gemini-2.5-pro",
-        contents: prompt,
-        config: {
-            responseMimeType: "application/json",
-            responseSchema: builderSchema,
-            thinkingConfig: { thinkingBudget: 32768 }
-        },
-    });
-
-    const jsonText = response.text.trim();
-    try {
-        return JSON.parse(jsonText) as BuilderCourse[];
-    } catch (e) {
-        console.error("Failed to parse JSON response for builder courses:", jsonText);
-        throw new Error("The AI returned an invalid response format for builder courses.");
     }
 };
 
