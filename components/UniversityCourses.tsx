@@ -27,9 +27,18 @@ export const UniversityCourses: React.FC<UniversityCoursesProps> = ({ initialCou
         setLoading(true);
         setError(null);
         try {
-            const randomUnis = [...RUSSELL_GROUP_UNIVERSITIES].sort(() => 0.5 - Math.random()).slice(0, 5);
-            const results = await Promise.all(randomUnis.map(uni => generateUniversityCourses(subjects, uni)));
-            const allCourses = results.flat();
+            let foundUnis = 0;
+            let allCourses: UniversityCourse[] = [];
+            let pool = [...RUSSELL_GROUP_UNIVERSITIES].sort(() => 0.5 - Math.random());
+            
+            while (foundUnis < 5 && pool.length > 0) {
+                const uni = pool.pop()!;
+                const courses = await generateUniversityCourses(subjects, uni);
+                if (courses.length > 0) {
+                    allCourses.push(courses[0]); // Take only one
+                    foundUnis++;
+                }
+            }
             setCachedCourses(prev => ({...prev, 'All Universities': allCourses}));
         } catch (err) {
             setError('Could not fetch courses. Please try again.');
@@ -82,6 +91,12 @@ export const UniversityCourses: React.FC<UniversityCoursesProps> = ({ initialCou
                     ))}
                 </select>
             </div>
+
+            {selectedUniversity === 'All Universities' && coursesToDisplay.length > 0 && (
+                <p className="mb-6 text-sm text-slate-500 italic">
+                    Note: This is just a random selection. You can choose a preferred University from the dropdown list to see a more complete set of courses from that University.
+                </p>
+            )}
 
             {loading && <p className="text-center p-4">Loading courses...</p>}
             {error && <p className="text-center p-4 text-red-600 bg-red-100 rounded">{error}</p>}
