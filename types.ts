@@ -40,7 +40,7 @@ export interface BaseAnalysis {
 
 // Full result type including the university courses
 export interface AnalysisResult extends BaseAnalysis {
-    universityCourses: UniversityCourse[];
+    universityCourses?: UniversityCourse[];
 }
 
 export interface SkipSubjectInfo {

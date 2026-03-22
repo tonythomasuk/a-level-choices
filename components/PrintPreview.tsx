@@ -61,7 +61,7 @@ export const PrintPreview = forwardRef<HTMLDivElement, { config?: { includeArchi
                                     <div>
                                         <p className="text-[10px] font-bold text-purple-600 uppercase mb-1">Mandatory A-Levels</p>
                                         <div className="flex flex-wrap gap-2">
-                                            {dreamerData.selectedCourse.a_level.mandatory.map((s: string) => (
+                                            {dreamerData.selectedCourse.a_level.mandatory?.map((s: string) => (
                                                 <span key={s} className="px-2 py-1 bg-white text-slate-900 text-xs font-bold rounded border border-slate-200">{s}</span>
                                             ))}
                                         </div>
@@ -69,7 +69,7 @@ export const PrintPreview = forwardRef<HTMLDivElement, { config?: { includeArchi
                                     <div>
                                         <p className="text-[10px] font-bold text-slate-500 uppercase mb-1">Helpful A-Levels</p>
                                         <div className="flex flex-wrap gap-2">
-                                            {dreamerData.selectedCourse.a_level.helpful.map((s: string) => (
+                                            {dreamerData.selectedCourse.a_level.helpful?.map((s: string) => (
                                                 <span key={s} className="px-2 py-1 bg-white text-slate-400 text-xs font-bold rounded border border-slate-200">{s}</span>
                                             ))}
                                         </div>
@@ -80,7 +80,7 @@ export const PrintPreview = forwardRef<HTMLDivElement, { config?: { includeArchi
                             <div className="bg-slate-50 p-6 rounded-2xl border border-slate-100">
                                 <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Career Pathways</h4>
                                 <div className="space-y-4">
-                                    {dreamerData.selectedCourse.careers.map((item: any, i: number) => (
+                                    {dreamerData.selectedCourse.careers?.map((item: any, i: number) => (
                                         <div key={i} className="text-sm">
                                             <p className="font-bold text-slate-900 flex items-center gap-2">
                                                 <span className="text-purple-500">•</span>
@@ -104,7 +104,7 @@ export const PrintPreview = forwardRef<HTMLDivElement, { config?: { includeArchi
                     <div className="p-6 bg-indigo-50 rounded-2xl border border-indigo-100 mb-8">
                         <h2 className="text-2xl font-black text-indigo-900 uppercase tracking-tight mb-4">The Architect: Subject Analysis</h2>
                         <div className="flex flex-wrap gap-2">
-                            {architectData.subjects.filter((s: string) => s).map((s: string, i: number) => (
+                            {architectData.subjects?.filter((s: string) => s).map((s: string, i: number) => (
                                 <span key={i} className="px-3 py-1 bg-white text-indigo-700 text-xs font-bold rounded shadow-sm border border-indigo-100">
                                     {s}
                                 </span>
@@ -120,7 +120,7 @@ export const PrintPreview = forwardRef<HTMLDivElement, { config?: { includeArchi
 
                     <Section title="University Courses">
                         <div className="grid grid-cols-1 gap-4">
-                            {architectData.analysisResult.universityCourses.map((course: any, i: number) => (
+                            {architectData.analysisResult.universityCourses?.map((course: any, i: number) => (
                                 <div key={i} className="p-4 border border-slate-200 rounded-lg">
                                     <h3 className="font-bold text-indigo-600">{course.courseName}</h3>
                                     <p className="text-xs text-slate-500 mb-2">{course.universityName}</p>

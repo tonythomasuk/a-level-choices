@@ -5,10 +5,9 @@ interface NexusProps {
     onSelectArchitect: () => void;
     onSelectBuilder: () => void;
     onSelectDreamer: () => void;
-    onSelectChaos: () => void;
 }
 
-export const Nexus: React.FC<NexusProps> = ({ onSelectArchitect, onSelectBuilder, onSelectDreamer, onSelectChaos }) => {
+export const Nexus: React.FC<NexusProps> = ({ onSelectArchitect, onSelectBuilder, onSelectDreamer }) => {
     return (
         <div className="min-h-screen flex flex-col items-center justify-center bg-slate-950 p-6 overflow-hidden relative">
             {/* Background elements */}
@@ -26,7 +25,7 @@ export const Nexus: React.FC<NexusProps> = ({ onSelectArchitect, onSelectBuilder
                     PATHFINDER <span className="text-transparent bg-clip-text bg-gradient-to-r from-indigo-400 to-purple-400">NEXUS</span>
                 </h1>
                 <p className="text-slate-400 text-lg md:text-xl font-medium max-w-2xl mx-auto">
-                    Many paths to your future. One choice to start.
+                    Many paths to discovering your future. Start anywhere.
                 </p>
             </motion.div>
 
@@ -106,16 +105,6 @@ export const Nexus: React.FC<NexusProps> = ({ onSelectArchitect, onSelectBuilder
                     </div>
                 </motion.div>
             </div>
-
-            <motion.button
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: 0.5 }}
-                onClick={onSelectChaos}
-                className="mt-12 px-8 py-4 bg-white/5 border border-white/10 rounded-full text-slate-400 font-black text-xs uppercase tracking-[0.3em] hover:bg-white/10 hover:text-white transition-all relative z-10"
-            >
-                🎲 Chaos Mode
-            </motion.button>
         </div>
     );
 };

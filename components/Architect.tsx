@@ -5,16 +5,16 @@ import { SubjectSelector } from './SubjectSelector';
 import { LoadingSpinner } from './LoadingSpinner';
 import { Section } from './Section';
 import { FutureStory } from './FutureStory';
-import { UniversityCourses } from './UniversityCourses';
 import { PopularCareers } from './PopularCareers';
 import { WhatIf } from './WhatIf';
 import { SkipSubject } from './SkipSubject';
-import { generateInitialAnalysis, generateUniversityCourses, generateSkipInfo } from '../services/geminiService';
-import type { AnalysisResult, UniversityCourse, SkipSubjectInfo } from '../types';
+import { generateInitialAnalysis, generateSkipInfo } from '../services/geminiService';
+import type { AnalysisResult, SkipSubjectInfo } from '../types';
 import { A_LEVEL_SUBJECTS } from '../constants';
 
 interface ArchitectProps {
     onBack: () => void;
+    onNavigateToBuilder: () => void;
 }
 
 const SelectedSubjectsBanner: React.FC<{ subjects: string[] }> = ({ subjects }) => (
@@ -85,7 +85,7 @@ const StickySummary: React.FC<{ subjects: string[] }> = ({ subjects }) => {
     );
 };
 
-export const Architect: React.FC<ArchitectProps> = ({ onBack }) => {
+export const Architect: React.FC<ArchitectProps> = ({ onBack, onNavigateToBuilder }) => {
     const [subjects, setSubjects] = useState<[string, string, string, string]>(['', '', '', '']);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -96,7 +96,6 @@ export const Architect: React.FC<ArchitectProps> = ({ onBack }) => {
         section3: false,
         section4: false,
     });
-    const [cachedCourses, setCachedCourses] = useState<Record<string, UniversityCourse[]>>({});
 
     const randomInitialSubjects = useMemo(() => {
         const shuffled = [...A_LEVEL_SUBJECTS].sort(() => 0.5 - Math.random());
@@ -110,7 +109,6 @@ export const Architect: React.FC<ArchitectProps> = ({ onBack }) => {
         setError(null);
         setAnalysisResult(null);
         setSkipInfo(null);
-        setCachedCourses({});
         setVisibleSections({ section2: false, section3: false, section4: false });
 
         const validSubjects = selectedSubjects.filter(s => s.trim() !== '');
@@ -121,20 +119,17 @@ export const Architect: React.FC<ArchitectProps> = ({ onBack }) => {
         }
 
         try {
-            const [baseAnalysis, initialCourses, skipSubjectInfo] = await Promise.all([
+            const [baseAnalysis, skipSubjectInfo] = await Promise.all([
                 generateInitialAnalysis(validSubjects),
-                generateUniversityCourses(validSubjects, 'All Universities'),
                 generateSkipInfo(validSubjects)
             ]);
 
             const result: AnalysisResult = {
                 ...baseAnalysis,
-                universityCourses: initialCourses,
             };
             
             setAnalysisResult(result);
             setSkipInfo(skipSubjectInfo);
-            setCachedCourses({'All Universities': initialCourses});
             setVisibleSections(prev => ({ ...prev, section2: true }));
         } catch (err) {
             console.error(err);
@@ -146,6 +141,7 @@ export const Architect: React.FC<ArchitectProps> = ({ onBack }) => {
 
     // Load state from localStorage on mount
     useEffect(() => {
+        window.scrollTo(0, 0);
         const saved = localStorage.getItem('architect_state');
         
         if (saved) {
@@ -155,14 +151,13 @@ export const Architect: React.FC<ArchitectProps> = ({ onBack }) => {
                 setAnalysisResult(parsed.analysisResult);
                 setSkipInfo(parsed.skipInfo);
                 setVisibleSections(parsed.visibleSections);
-                setCachedCourses(parsed.cachedCourses || {});
             } catch (e) {
                 console.error('Failed to load architect state', e);
             }
         } else {
             setSubjects(randomInitialSubjects);
         }
-    }, [randomInitialSubjects]);
+    }, []); // Removed randomInitialSubjects dependency
 
     // Save state to localStorage whenever it changes
     useEffect(() => {
@@ -171,10 +166,9 @@ export const Architect: React.FC<ArchitectProps> = ({ onBack }) => {
             analysisResult,
             skipInfo,
             visibleSections,
-            cachedCourses
         };
         localStorage.setItem('architect_state', JSON.stringify(state));
-    }, [subjects, analysisResult, skipInfo, visibleSections, cachedCourses]);
+    }, [subjects, analysisResult, skipInfo, visibleSections]);
     
     const handleRerunAnalysis = (newSubjects: [string, string, string, string]) => {
         setSubjects(newSubjects);
@@ -197,7 +191,12 @@ export const Architect: React.FC<ArchitectProps> = ({ onBack }) => {
                     />
                 </Section>
 
-                {loading && <LoadingSpinner />}
+                {loading && (
+                    <div className="mt-8 text-center">
+                        <LoadingSpinner />
+                        <p className="text-indigo-600 font-bold mt-4 animate-pulse">Analyzing your subjects and generating insights...</p>
+                    </div>
+                )}
                 {error && <div className="mt-6 text-center text-red-600 bg-red-100 p-4 rounded-lg">{error}</div>}
 
                 <AnimatePresence mode="wait">
@@ -213,21 +212,20 @@ export const Architect: React.FC<ArchitectProps> = ({ onBack }) => {
                                 <FutureStory story={analysisResult.futureStory} />
                             </Section>
 
-                            <Section title="University Courses" iconPrompt="a university building with a graduation cap">
-                                <SelectedSubjectsBanner subjects={subjects.filter(s => s)} />
-                                <UniversityCourses 
-                                    initialCourses={analysisResult.universityCourses}
-                                    subjects={subjects.filter(s => s)}
-                                    cachedCourses={cachedCourses}
-                                    setCachedCourses={setCachedCourses}
-                                />
-                            </Section>
-
                             <motion.div 
                                 initial={{ opacity: 0, scale: 0.9 }}
                                 animate={{ opacity: 1, scale: 1 }}
                                 className="my-12 text-center"
                             >
+                                <button
+                                    onClick={() => {
+                                        localStorage.setItem('builder_mode', 'subjects');
+                                        onNavigateToBuilder();
+                                    }}
+                                    className="px-10 py-4 bg-indigo-600 text-white font-black text-sm uppercase tracking-widest rounded-full hover:bg-indigo-700 transition-all transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-indigo-300 shadow-xl shadow-indigo-200 mb-8"
+                                >
+                                    Explore University Courses for these subjects
+                                </button>
                                 {!visibleSections.section3 && (
                                     <button
                                         onClick={() => setVisibleSections(prev => ({ ...prev, section3: true }))}

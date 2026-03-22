@@ -9,7 +9,7 @@ export const Header: React.FC = () => (
             className="text-center mb-12"
         >
             <h2 className="text-4xl font-black text-slate-900 mb-4 tracking-tight">The Architect</h2>
-            <p className="text-slate-500 text-lg font-medium">"I know my subjects. Show me my future."</p>
+            <p className="text-slate-500 text-lg font-medium">I know my subjects. Help me imagine my future life and career.</p>
         </motion.div>
     </div>
 );

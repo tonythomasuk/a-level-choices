@@ -83,6 +83,7 @@ export const generateInitialAnalysis = async (subjects: string[]): Promise<BaseA
         Analyze the A-level subject combination: ${subjectCombination}.
         Your response must be grounded in official, authoritative UK sources like the Russell Group's 'Informed Choices' guide, UCAS, HESA, and OfQual data.
         CRITICAL INSTRUCTION: Your analysis must first identify the most common university degree categories these subjects lead to (e.g., 'STEM & Engineering', 'Humanities & Social Sciences', 'Creative Arts', 'Business & Economics'). Then, for each career you suggest, you MUST populate the 'degreePathways' field with the relevant categories. This creates a clear pathway from A-levels to degree to career.
+        CRITICAL INSTRUCTION: In the 'body' of the story, provide a detailed analysis of how each of the chosen subjects interacts with the others. Explain the unique ways they complement each other, how they can be applied together in real-world scenarios, and how they collectively build a powerful, versatile skill set for the student.
         Provide a detailed, inspirational, and accurate analysis.
         Correct any subject name typos to their standard A-level names.
         Return the data in the specified JSON schema. Ensure all markdown fields are formatted for readability with paragraphs, bold text for emphasis on skills and figures, and lists where appropriate.

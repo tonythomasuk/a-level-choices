@@ -7,8 +7,6 @@ import { Builder } from './components/Builder';
 import { Footer } from './components/Footer';
 import { GlobalNav } from './components/GlobalNav';
 import { PrintPreview } from './components/PrintPreview';
-import { A_LEVEL_SUBJECTS } from './constants';
-import { DREAMER_DATA } from './dreamerData';
 
 type View = 'nexus' | 'architect' | 'dreamer' | 'builder';
 
@@ -37,36 +35,12 @@ const App: React.FC = () => {
         handleNavigate('dreamer');
     };
 
-    const handleSelectChaos = () => {
-        // Pick a random career from Dreamer data
-        const allCourses = DREAMER_DATA.flatMap(w => w.courses);
-        const randomCourse = allCourses[Math.floor(Math.random() * allCourses.length)];
-        const mandatory = randomCourse.a_level.mandatory;
-        
-        // Fill up to 4 subjects
-        const subjects: [string, string, string, string] = ['', '', '', ''];
-        mandatory.forEach((s, i) => {
-            if (i < 4) subjects[i] = s;
-        });
-        
-        // If less than 3, add randoms
-        let count = mandatory.length;
-        const available = A_LEVEL_SUBJECTS.filter(s => !mandatory.includes(s));
-        while (count < 3) {
-            const randomSub = available[Math.floor(Math.random() * available.length)];
-            subjects[count] = randomSub;
-            count++;
-        }
-
-        // We'll just set the view to architect and let it handle its own state
-        setView('architect');
-    };
-
     const handleNavigate = (newView: View) => {
         if (newView === 'dreamer') {
             localStorage.removeItem('dreamer_state');
         }
         setView(newView);
+        window.scrollTo(0, 0);
     };
 
     return (
@@ -87,7 +61,6 @@ const App: React.FC = () => {
                             onSelectArchitect={handleSelectArchitect}
                             onSelectBuilder={handleSelectBuilder}
                             onSelectDreamer={handleSelectDreamer}
-                            onSelectChaos={handleSelectChaos}
                         />
                     </motion.div>
                 )}
@@ -101,6 +74,7 @@ const App: React.FC = () => {
                     >
                         <Architect 
                             onBack={() => handleNavigate('nexus')}
+                            onNavigateToBuilder={() => handleNavigate('builder')}
                         />
                     </motion.div>
                 )}

@@ -35,6 +35,7 @@ export const SubjectSelector: React.FC<SubjectSelectorProps> = ({ initialSubject
                 <p className="text-sm text-slate-500">
                     Choose 3 mandatory subjects and 1 optional subject to see where they could take you.
                 </p>
+                <p className="text-xs text-slate-400 mt-2 italic">Schools may sometimes label subjects differently e.g., "Politics" is here listed under "Government and Politics".</p>
             </div>
             
             <form onSubmit={handleSubmit}>
