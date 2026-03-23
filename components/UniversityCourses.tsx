@@ -4,6 +4,7 @@ import { UniversityCourse } from '../types';
 import { RUSSELL_GROUP_UNIVERSITIES } from '../constants';
 import { generateUniversityCourses } from '../services/geminiService';
 import { CourseCard } from './CourseCard';
+import { LoadingSpinner } from './LoadingSpinner';
 
 interface UniversityCoursesProps {
     initialCourses: UniversityCourse[];
@@ -31,7 +32,7 @@ export const UniversityCourses: React.FC<UniversityCoursesProps> = ({ initialCou
             let allCourses: UniversityCourse[] = [];
             let pool = [...RUSSELL_GROUP_UNIVERSITIES].sort(() => 0.5 - Math.random());
             
-            while (foundUnis < 5 && pool.length > 0) {
+            while (foundUnis < 3 && pool.length > 0) {
                 const uni = pool.pop()!;
                 const courses = await generateUniversityCourses(subjects, uni);
                 if (courses.length > 0) {
@@ -98,8 +99,18 @@ export const UniversityCourses: React.FC<UniversityCoursesProps> = ({ initialCou
                 </p>
             )}
 
-            {loading && <p className="text-center p-4">Loading courses...</p>}
-            {error && <p className="text-center p-4 text-red-600 bg-red-100 rounded">{error}</p>}
+            {loading && (
+                <div className="mt-8 text-center">
+                    <LoadingSpinner messages={[
+                        "Cross-referencing university courses...",
+                        "Confirming typical offer...",
+                        "Verifying course links...",
+                    ]} />
+                    <p className="text-emerald-600 font-bold mt-4 animate-pulse">Collecting courses from Russell Group Universities...</p>
+                </div>
+            )}
+            
+            {!loading && error && <p className="text-center p-4 text-red-600 bg-red-100 rounded">{error}</p>}
 
             {!loading && !error && (
                 <div className="grid grid-cols-1 gap-6">
@@ -108,7 +119,7 @@ export const UniversityCourses: React.FC<UniversityCoursesProps> = ({ initialCou
                             key={index}
                             title={course.courseName}
                             university={course.universityName}
-                            typicalOffer={course.typicalOffer}
+                            typicalOffer={course.typicalOffer?.match(/[A-Z]\*?[A-Z]\*?[A-Z]\*?/)?.[0]}
                             mandatorySubjects={course.requiredSubjects}
                             helpfulSubjects={course.recommendedSubjects}
                             helpfulGCSEs={[]} // Not available in UniversityCourse type
@@ -117,6 +128,15 @@ export const UniversityCourses: React.FC<UniversityCoursesProps> = ({ initialCou
                             url={course.url}
                         />
                     )) : <p className="text-center py-12 text-slate-400 font-medium">No specific courses found for this combination at {selectedUniversity}.</p>}
+                    
+                    {selectedUniversity === 'All Universities' && coursesToDisplay.length > 0 && (
+                        <button 
+                            onClick={fetchAllUniversities}
+                            className="mt-4 w-full py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-colors"
+                        >
+                            Find me more Courses
+                        </button>
+                    )}
                 </div>
             )}
         </div>

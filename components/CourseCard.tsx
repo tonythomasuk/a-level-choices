@@ -45,16 +45,6 @@ export const CourseCard: React.FC<CourseCardProps> = ({
                         </div>
                     </div>
                 )}
-                {url && !typicalOffer && (
-                    <a 
-                        href={url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="px-6 py-3 bg-slate-900 text-white text-xs font-black uppercase tracking-widest rounded-xl hover:bg-slate-800 transition-all text-center"
-                    >
-                        View Course Page
-                    </a>
-                )}
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-8">
@@ -94,14 +84,14 @@ export const CourseCard: React.FC<CourseCardProps> = ({
             </div>
 
             {subjectFitAnalysis && (
-                <div className="p-4 bg-indigo-50/50 rounded-xl border border-indigo-100/50">
+                <div className="p-4 bg-indigo-50/50 rounded-xl border border-indigo-100/50 mb-6">
                     <span className="text-[10px] font-black uppercase tracking-widest text-indigo-600 block mb-2">Subject Fit Analysis</span>
                     <p className="text-xs font-medium text-slate-700 leading-relaxed">{subjectFitAnalysis}</p>
                 </div>
             )}
             
-            {url && typicalOffer && (
-                <div className="mt-6 pt-4 border-t border-slate-50 flex justify-end">
+            {url && (
+                <div className="pt-4 border-t border-slate-50 flex justify-end">
                     <a 
                         href={url} 
                         target="_blank" 

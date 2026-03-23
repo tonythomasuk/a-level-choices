@@ -11,13 +11,15 @@ import { SkipSubject } from './SkipSubject';
 import { generateInitialAnalysis, generateSkipInfo } from '../services/geminiService';
 import type { AnalysisResult, SkipSubjectInfo } from '../types';
 import { A_LEVEL_SUBJECTS } from '../constants';
+import { useGlobalState } from '../context/GlobalStateContext';
+import { ScrollToTop } from './ScrollToTop';
 
 interface ArchitectProps {
     onBack: () => void;
     onNavigateToBuilder: () => void;
 }
 
-const SelectedSubjectsBanner: React.FC<{ subjects: string[] }> = ({ subjects }) => (
+const SelectedSubjectsBanner: React.FC<{ subjects: string[] }> = React.memo(({ subjects }) => (
     <motion.div 
         initial={{ opacity: 0, y: -10 }}
         animate={{ opacity: 1, y: 0 }}
@@ -32,9 +34,9 @@ const SelectedSubjectsBanner: React.FC<{ subjects: string[] }> = ({ subjects }) 
             ))}
         </div>
     </motion.div>
-);
+));
 
-const StickySummary: React.FC<{ subjects: string[] }> = ({ subjects }) => {
+const StickySummary: React.FC<{ subjects: string[] }> = React.memo(({ subjects }) => {
     const [isScrolled, setIsScrolled] = useState(false);
 
     useEffect(() => {
@@ -83,24 +85,12 @@ const StickySummary: React.FC<{ subjects: string[] }> = ({ subjects }) => {
             )}
         </AnimatePresence>
     );
-};
+});
 
 export const Architect: React.FC<ArchitectProps> = ({ onBack, onNavigateToBuilder }) => {
-    const [subjects, setSubjects] = useState<[string, string, string, string]>(['', '', '', '']);
+    const { subjects, setSubjects, setBuilderMode, analysisResult, skipInfo, visibleSections, setAnalysisResult, setSkipInfo, setVisibleSections } = useGlobalState();
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
-    const [skipInfo, setSkipInfo] = useState<SkipSubjectInfo[] | null>(null);
-    const [visibleSections, setVisibleSections] = useState({
-        section2: false,
-        section3: false,
-        section4: false,
-    });
-
-    const randomInitialSubjects = useMemo(() => {
-        const shuffled = [...A_LEVEL_SUBJECTS].sort(() => 0.5 - Math.random());
-        return [shuffled[0], shuffled[1], shuffled[2], ''] as [string, string, string, string];
-    }, []);
 
     const handleExplore = useCallback(async (selectedSubjects: [string, string, string, string]) => {
         setSubjects(selectedSubjects);
@@ -137,48 +127,29 @@ export const Architect: React.FC<ArchitectProps> = ({ onBack, onNavigateToBuilde
         } finally {
             setLoading(false);
         }
-    }, []);
+    }, [setSubjects, setAnalysisResult, setSkipInfo, setVisibleSections]);
 
     // Load state from localStorage on mount
     useEffect(() => {
         window.scrollTo(0, 0);
-        const saved = localStorage.getItem('architect_state');
-        
-        if (saved) {
-            try {
-                const parsed = JSON.parse(saved);
-                setSubjects(parsed.subjects);
-                setAnalysisResult(parsed.analysisResult);
-                setSkipInfo(parsed.skipInfo);
-                setVisibleSections(parsed.visibleSections);
-            } catch (e) {
-                console.error('Failed to load architect state', e);
-            }
-        } else {
-            setSubjects(randomInitialSubjects);
+        // If no subjects, set random
+        if (subjects.every(s => s === '')) {
+            const shuffled = [...A_LEVEL_SUBJECTS].sort(() => 0.5 - Math.random());
+            setSubjects([shuffled[0], shuffled[1], shuffled[2], '']);
         }
-    }, []); // Removed randomInitialSubjects dependency
-
-    // Save state to localStorage whenever it changes
-    useEffect(() => {
-        const state = {
-            subjects,
-            analysisResult,
-            skipInfo,
-            visibleSections,
-        };
-        localStorage.setItem('architect_state', JSON.stringify(state));
-    }, [subjects, analysisResult, skipInfo, visibleSections]);
+    }, []); 
     
-    const handleRerunAnalysis = (newSubjects: [string, string, string, string]) => {
+    const handleRerunAnalysis = useCallback((newSubjects: [string, string, string, string]) => {
         setSubjects(newSubjects);
         handleExplore(newSubjects);
         window.scrollTo({ top: 0, behavior: 'smooth' });
-    };
+    }, [setSubjects, handleExplore]);
+
+    const activeSubjects = useMemo(() => subjects.filter(s => s), [subjects]);
 
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 pb-24">
-            <StickySummary subjects={subjects.filter(s => s)} />
+            <StickySummary subjects={activeSubjects} />
             
             <main className="container mx-auto max-w-5xl p-6">
                 <Header />
@@ -193,7 +164,14 @@ export const Architect: React.FC<ArchitectProps> = ({ onBack, onNavigateToBuilde
 
                 {loading && (
                     <div className="mt-8 text-center">
-                        <LoadingSpinner />
+                        <LoadingSpinner messages={[
+                            "Analyzing A-Level Synergy...",
+                            "Consulting Russell Group Guidance...",
+                            "Cross-referencing University Courses...",
+                            "Calculating HESA Earnings Data...",
+                            "Mapping Career Pathways...",
+                            "Crafting Your Future Story...",
+                        ]} />
                         <p className="text-indigo-600 font-bold mt-4 animate-pulse">Analyzing your subjects and generating insights...</p>
                     </div>
                 )}
@@ -208,7 +186,7 @@ export const Architect: React.FC<ArchitectProps> = ({ onBack, onNavigateToBuilde
                             exit={{ opacity: 0 }}
                         >
                             <Section title="Your Future Story" iconPrompt="a book opening up to a bright path">
-                                <SelectedSubjectsBanner subjects={subjects.filter(s => s)} />
+                                <SelectedSubjectsBanner subjects={activeSubjects} />
                                 <FutureStory story={analysisResult.futureStory} />
                             </Section>
 
@@ -219,7 +197,7 @@ export const Architect: React.FC<ArchitectProps> = ({ onBack, onNavigateToBuilde
                             >
                                 <button
                                     onClick={() => {
-                                        localStorage.setItem('builder_mode', 'subjects');
+                                        setBuilderMode('subjects');
                                         onNavigateToBuilder();
                                     }}
                                     className="px-10 py-4 bg-indigo-600 text-white font-black text-sm uppercase tracking-widest rounded-full hover:bg-indigo-700 transition-all transform hover:scale-105 active:scale-95 focus:outline-none focus:ring-4 focus:ring-indigo-300 shadow-xl shadow-indigo-200 mb-8"
@@ -248,7 +226,7 @@ export const Architect: React.FC<ArchitectProps> = ({ onBack, onNavigateToBuilde
                             exit={{ opacity: 0 }}
                         >
                             <Section title="Popular Careers & Earning Potential" iconPrompt="a briefcase with a rising stock chart">
-                                <SelectedSubjectsBanner subjects={subjects.filter(s => s)} />
+                                <SelectedSubjectsBanner subjects={activeSubjects} />
                                 <PopularCareers 
                                     careers={analysisResult.popularCareers} 
                                     earningPotential={analysisResult.earningPotential}
@@ -282,14 +260,14 @@ export const Architect: React.FC<ArchitectProps> = ({ onBack, onNavigateToBuilde
                             exit={{ opacity: 0 }}
                         >
                             <Section title="University Entry Flexibility" iconPrompt="a flexible path or a key unlocking a door">
-                                <SelectedSubjectsBanner subjects={subjects.filter(s => s)} />
+                                <SelectedSubjectsBanner subjects={activeSubjects} />
                                 <SkipSubject info={skipInfo} />
                             </Section>
 
                             <Section title="What If..." iconPrompt="a crystal ball showing alternate paths">
-                                <SelectedSubjectsBanner subjects={subjects.filter(s => s)} />
+                                <SelectedSubjectsBanner subjects={activeSubjects} />
                                 <WhatIf 
-                                    currentSubjects={subjects.filter(s => s)}
+                                    currentSubjects={activeSubjects}
                                     onRerun={handleRerunAnalysis}
                                 />
                             </Section>
@@ -308,6 +286,7 @@ export const Architect: React.FC<ArchitectProps> = ({ onBack, onNavigateToBuilde
                     </p>
                 </div>
             </main>
+            <ScrollToTop />
         </div>
     );
 };

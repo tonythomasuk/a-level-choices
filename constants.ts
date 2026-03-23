@@ -11,16 +11,16 @@ export const A_LEVEL_SUBJECTS: string[] = [
 ];
 
 export const RUSSELL_GROUP_UNIVERSITIES: string[] = [
-    "University of Birmingham", "University of Bristol", "University of Cambridge", 
-    "Cardiff University", "Durham University", "University of Edinburgh", 
-    "University of Exeter", "University of Glasgow", "Imperial College London", 
-    "King's College London", "University of Leeds", "University of Liverpool", 
-    "London School of Economics and Political Science", "University of Manchester", 
-    "Newcastle University", "University of Nottingham", "University of Oxford", 
+    "Birmingham, University of", "Bristol, University of", "Cambridge, University of", 
+    "Cardiff University", "Durham University", "Edinburgh, University of", 
+    "Exeter, University of", "Glasgow, University of", "Imperial College London", 
+    "King's College London", "Leeds, University of", "Liverpool, University of", 
+    "London School of Economics and Political Science", "Manchester, University of", 
+    "Newcastle University", "Nottingham, University of", "Oxford, University of", 
     "Queen Mary University of London", "Queen's University Belfast", 
-    "University of Sheffield", "University of Southampton", "University College London", 
-    "University of Warwick", "University of York"
-];
+    "Sheffield, University of", "Southampton, University of", "University College London", 
+    "Warwick, University of", "York, University of"
+].sort();
 
 export const UNIVERSITY_SUBJECT_CATEGORIES: string[] = [
     'Accounting', 'Aerospace Engineering', 'Ancient History', 'Anthropology', 'Archaeology', 

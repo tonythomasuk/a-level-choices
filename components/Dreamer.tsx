@@ -3,17 +3,18 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Search, Loader2, Briefcase } from 'lucide-react';
 import { DREAMER_DATA } from '../dreamerData';
 import { DreamerWorld, DreamerCourse } from '../types';
-import { mapCareerToDreamerCourse } from '../services/geminiService';
+import { useGlobalState } from '../context/GlobalStateContext';
+import { ScrollToTop } from './ScrollToTop';
 
 interface DreamerProps {
     onBack: () => void;
 }
 
 export const Dreamer: React.FC<DreamerProps> = ({ onBack }) => {
-    const [expandedWorldId, setExpandedWorldId] = useState<string | null>(null);
-    const [expandedCourseTitle, setExpandedCourseTitle] = useState<string | null>(null);
+    const { dreamerState, setDreamerState } = useGlobalState();
+    const { expandedWorldId, expandedCourseTitle, randomCourses } = dreamerState;
+
     const [searchQuery, setSearchQuery] = useState('');
-    const [randomCourses, setRandomCourses] = useState<Record<string, DreamerCourse[]>>({});
 
     // Memoize filtered worlds for performance
     const filteredWorlds = useMemo(() => {
@@ -32,69 +33,55 @@ export const Dreamer: React.FC<DreamerProps> = ({ onBack }) => {
         );
     }, [searchQuery]);
 
-    // Load state from localStorage on mount
     useEffect(() => {
         window.scrollTo(0, 0);
-        const saved = localStorage.getItem('dreamer_state');
-        if (saved) {
-            try {
-                const parsed = JSON.parse(saved);
-                if (parsed.expandedWorldId) setExpandedWorldId(parsed.expandedWorldId);
-                if (parsed.expandedCourseTitle) setExpandedCourseTitle(parsed.expandedCourseTitle);
-                if (parsed.randomCourses) setRandomCourses(parsed.randomCourses);
-            } catch (e) {
-                console.error('Failed to load dreamer state', e);
-            }
-        }
     }, []);
-
-    // Save state to localStorage whenever it changes
-    useEffect(() => {
-        const state = {
-            expandedWorldId,
-            expandedCourseTitle,
-            randomCourses
-        };
-        localStorage.setItem('dreamer_state', JSON.stringify(state));
-    }, [expandedWorldId, expandedCourseTitle, randomCourses]);
 
     const handleWorldToggle = (worldId: string) => {
         if (expandedWorldId === worldId) {
-            setExpandedWorldId(null);
-            setExpandedCourseTitle(null);
+            setDreamerState({ ...dreamerState, expandedWorldId: null, expandedCourseTitle: null });
         } else {
-            setExpandedWorldId(worldId);
-            setExpandedCourseTitle(null);
             // Initialize random courses for this world if not already set
-            if (!randomCourses[worldId]) {
+            let newRandomCourses = { ...randomCourses };
+            if (!newRandomCourses[worldId]) {
                 const world = DREAMER_DATA.find(w => w.id === worldId);
                 if (world) {
-                    setRandomCourses(prev => ({
-                        ...prev,
-                        [worldId]: [...world.courses].sort(() => 0.5 - Math.random()).slice(0, 3)
-                    }));
+                    newRandomCourses[worldId] = [...world.courses].sort(() => 0.5 - Math.random()).slice(0, 3);
                 }
             }
+            setDreamerState({ 
+                ...dreamerState, 
+                expandedWorldId: worldId, 
+                expandedCourseTitle: null,
+                randomCourses: newRandomCourses
+            });
         }
     };
 
     const handleCourseToggle = (courseTitle: string) => {
-        setExpandedCourseTitle(prev => prev === courseTitle ? null : courseTitle);
+        setDreamerState({ 
+            ...dreamerState, 
+            expandedCourseTitle: expandedCourseTitle === courseTitle ? null : courseTitle 
+        });
     };
 
     const handleTryOtherCourses = (worldId: string) => {
         const world = DREAMER_DATA.find(w => w.id === worldId);
         if (world) {
-            setRandomCourses(prev => ({
-                ...prev,
-                [worldId]: [...world.courses].sort(() => 0.5 - Math.random()).slice(0, 3)
-            }));
-            setExpandedCourseTitle(null);
+            setDreamerState({ 
+                ...dreamerState, 
+                randomCourses: {
+                    ...randomCourses,
+                    [worldId]: [...world.courses].sort(() => 0.5 - Math.random()).slice(0, 3)
+                },
+                expandedCourseTitle: null
+            });
         }
     };
 
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 pb-24">
+            <ScrollToTop />
             <main className="container mx-auto max-w-5xl p-6">
                 <div className="py-12">
                     <motion.div 

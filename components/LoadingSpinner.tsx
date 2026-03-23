@@ -2,7 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 
-const loadingMessages = [
+interface LoadingSpinnerProps {
+    messages?: string[];
+}
+
+const defaultMessages = [
     "Analyzing A-Level Synergy...",
     "Consulting Russell Group Guidance...",
     "Cross-referencing University Courses...",
@@ -11,16 +15,16 @@ const loadingMessages = [
     "Crafting Your Future Story...",
 ];
 
-export const LoadingSpinner: React.FC = () => {
+export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({ messages = defaultMessages }) => {
     const [messageIndex, setMessageIndex] = useState(0);
 
     useEffect(() => {
         const intervalId = setInterval(() => {
-            setMessageIndex((prevIndex) => (prevIndex + 1) % loadingMessages.length);
+            setMessageIndex((prevIndex) => (prevIndex + 1) % messages.length);
         }, 2500);
 
         return () => clearInterval(intervalId);
-    }, []);
+    }, [messages]);
 
     return (
         <div className="flex flex-col items-center justify-center my-20 py-10">
@@ -49,7 +53,7 @@ export const LoadingSpinner: React.FC = () => {
                         exit={{ opacity: 0, y: -10 }}
                         className="text-slate-500 font-black text-xs uppercase tracking-[0.2em] text-center"
                     >
-                        {loadingMessages[messageIndex]}
+                        {messages[messageIndex]}
                     </motion.p>
                 </AnimatePresence>
             </div>

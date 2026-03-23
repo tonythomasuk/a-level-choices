@@ -1,7 +1,8 @@
 
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import { useReactToPrint } from 'react-to-print';
 import { PrintPreview } from './PrintPreview';
+import { toast } from 'sonner';
 
 const sourceGroups = [
     {
@@ -33,12 +34,22 @@ export const Footer: React.FC = () => {
     const [includeArchitect, setIncludeArchitect] = React.useState(true);
     const [includeBuilder, setIncludeBuilder] = React.useState(false);
     const [includeDreamer, setIncludeDreamer] = React.useState(false);
+    const [isGenerating, setIsGenerating] = useState(false);
     
     const componentRef = useRef<HTMLDivElement>(null);
 
     const handlePrint = useReactToPrint({
         contentRef: componentRef,
         documentTitle: 'Pathfinder-Nexus-Report',
+        onBeforePrint: async () => {
+            setIsGenerating(true);
+            toast.loading('Generating your PDF report...');
+        },
+        onAfterPrint: () => {
+            setIsGenerating(false);
+            toast.dismiss();
+            toast.success('PDF report generated successfully!');
+        },
     });
 
     return (
@@ -89,9 +100,10 @@ export const Footer: React.FC = () => {
                         </div>
                         <button
                             onClick={() => handlePrint()}
-                            className="px-10 py-4 bg-white text-slate-900 font-black text-sm uppercase tracking-widest rounded-full hover:bg-indigo-50 transition-all shadow-xl shadow-white/5"
+                            disabled={isGenerating}
+                            className="px-10 py-4 bg-white text-slate-900 font-black text-sm uppercase tracking-widest rounded-full hover:bg-indigo-50 transition-all shadow-xl shadow-white/5 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            Generate PDF Report
+                            {isGenerating ? 'Generating...' : 'Generate PDF Report'}
                         </button>
                     </div>
 

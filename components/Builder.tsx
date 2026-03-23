@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { UNIVERSITY_SUBJECT_CATEGORIES, RUSSELL_GROUP_UNIVERSITIES } from '../constants';
 import { generateBuilderCourses } from '../services/geminiService';
@@ -6,20 +6,15 @@ import { BuilderCourse, UniversityCourse } from '../types';
 import { LoadingSpinner } from './LoadingSpinner';
 import { UniversityCourses } from './UniversityCourses';
 import { CourseCard } from './CourseCard';
+import { useGlobalState } from '../context/GlobalStateContext';
+import { ScrollToTop } from './ScrollToTop';
 
 interface BuilderProps {
     onBack: () => void;
 }
 
 export const Builder: React.FC<BuilderProps> = ({ onBack }) => {
-    const [mode, setMode] = useState<'majors' | 'subjects'>(() => {
-        const builderMode = localStorage.getItem('builder_mode');
-        if (builderMode) {
-            localStorage.removeItem('builder_mode');
-            return builderMode as 'majors' | 'subjects';
-        }
-        return 'majors';
-    });
+    const { subjects, builderMode: mode, setBuilderMode: setMode } = useGlobalState();
     const [major, setMajor] = useState('');
     const [minor1, setMinor1] = useState('');
     const [minor2, setMinor2] = useState('');
@@ -27,7 +22,6 @@ export const Builder: React.FC<BuilderProps> = ({ onBack }) => {
     const [loading, setLoading] = useState(false);
     const [courses, setCourses] = useState<BuilderCourse[]>([]);
     const [error, setError] = useState<string | null>(null);
-    const [subjects, setSubjects] = useState<string[]>([]);
     const [cachedCourses, setCachedCourses] = useState<Record<string, UniversityCourse[]>>({});
 
     // Load state from localStorage on mount
@@ -43,27 +37,8 @@ export const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                 setTargetUnis(parsed.targetUnis || ['', '', '']);
                 setCourses(parsed.courses || []);
                 setCachedCourses(parsed.cachedCourses || {});
-                if (parsed.mode) {
-                    setMode(parsed.mode);
-                }
             } catch (e) {
                 console.error('Failed to load builder state', e);
-            }
-        }
-        
-        const builderMode = localStorage.getItem('builder_mode');
-        if (builderMode) {
-            setMode(builderMode as 'majors' | 'subjects');
-            localStorage.removeItem('builder_mode');
-        }
-        
-        const architectSaved = localStorage.getItem('architect_state');
-        if (architectSaved) {
-            try {
-                const parsed = JSON.parse(architectSaved);
-                setSubjects(parsed.subjects.filter((s: string) => s.trim() !== ''));
-            } catch (e) {
-                console.error('Failed to load architect state', e);
             }
         }
     }, []);
@@ -74,18 +49,18 @@ export const Builder: React.FC<BuilderProps> = ({ onBack }) => {
         localStorage.setItem('builder_state', JSON.stringify(state));
     }, [major, minor1, minor2, targetUnis, courses, cachedCourses, mode]);
 
-    const canUseSubjectsMode = subjects.length >= 3;
+    const canUseSubjectsMode = useMemo(() => subjects.length >= 3 && subjects.some(s => s !== ''), [subjects]);
 
-    const toggleMode = (newMode: 'majors' | 'subjects') => {
+    const toggleMode = useCallback((newMode: 'majors' | 'subjects') => {
         if (newMode === 'subjects' && !canUseSubjectsMode) {
             setError('Please select at least 3 subjects in The Architect first.');
             return;
         }
         setMode(newMode);
         setError(null);
-    };
+    }, [canUseSubjectsMode, setMode]);
 
-    const handleSearch = async () => {
+    const handleSearch = useCallback(async () => {
         if (!major) {
             setError('Major is mandatory.');
             return;
@@ -102,13 +77,15 @@ export const Builder: React.FC<BuilderProps> = ({ onBack }) => {
         } finally {
             setLoading(false);
         }
-    };
+    }, [major, minor1, minor2, targetUnis]);
 
-    const updateTargetUni = (index: number, value: string) => {
-        const newUnis = [...targetUnis];
-        newUnis[index] = value;
-        setTargetUnis(newUnis);
-    };
+    const updateTargetUni = useCallback((index: number, value: string) => {
+        setTargetUnis(prev => {
+            const newUnis = [...prev];
+            newUnis[index] = value;
+            return newUnis;
+        });
+    }, []);
 
     return (
         <div className="min-h-screen bg-slate-50 text-slate-900 pb-24">
@@ -144,9 +121,7 @@ export const Builder: React.FC<BuilderProps> = ({ onBack }) => {
 
                     {mode === 'majors' && (
                         <div className="bg-white p-8 rounded-[2.5rem] border border-slate-200 shadow-xl shadow-slate-200/50 mb-12">
-                            {/* ... existing majors/minors form ... */}
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-                                {/* Major */}
                                 <div>
                                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Major (Mandatory)</label>
                                     <select 
@@ -161,7 +136,6 @@ export const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                                     </select>
                                 </div>
 
-                                {/* Minor 1 */}
                                 <div>
                                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Minor 1 (Optional)</label>
                                     <select 
@@ -176,7 +150,6 @@ export const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                                     </select>
                                 </div>
 
-                                {/* Minor 2 */}
                                 <div>
                                     <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-2">Minor 2 (Optional)</label>
                                     <select 
@@ -192,7 +165,6 @@ export const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                                 </div>
                             </div>
 
-                            {/* Target Universities */}
                             <div className="mb-8 pt-8 border-t border-slate-100">
                                 <label className="block text-[10px] font-black text-slate-400 uppercase tracking-widest mb-4">Target Russell Group Universities (Optional - Prioritised in search)</label>
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -225,18 +197,23 @@ export const Builder: React.FC<BuilderProps> = ({ onBack }) => {
 
                     {loading && (
                         <div className="mt-8 text-center">
-                            <LoadingSpinner />
+                            <LoadingSpinner messages={[
+                                "Cross-referencing university courses...",
+                                "Confirming typical offer...",
+                                "Verifying course links...",
+                            ]} />
                             <p className="text-emerald-600 font-bold mt-4 animate-pulse">Searching for the perfect courses...</p>
                         </div>
                     )}
 
-                    {mode === 'majors' && courses.length > 0 && (
+                    {!loading && mode === 'majors' && courses.length > 0 && (
                         <div className="space-y-8">
                             {courses.map((course, index) => (
                                 <CourseCard
                                     key={index}
                                     title={course.title}
                                     university={course.university}
+                                    typicalOffer={course.specialConditions.match(/[A-Z]\*?[A-Z]\*?[A-Z]\*?/)?.[0]}
                                     mandatorySubjects={course.a_level?.mandatory || []}
                                     helpfulSubjects={course.a_level?.helpful || []}
                                     helpfulGCSEs={course.gcse?.helpful || []}
@@ -247,12 +224,12 @@ export const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                         </div>
                     )}
 
-                    {mode === 'subjects' && subjects.length > 0 && (
+                    {!loading && mode === 'subjects' && subjects.length > 0 && (
                         <div className="mb-12 p-8 bg-white rounded-[2rem] border border-slate-200 shadow-sm">
-                            <h3 className="text-2xl font-black text-slate-900 mb-6 tracking-tight">University Courses based on your subjects: {subjects.join(', ')}</h3>
+                            <h3 className="text-2xl font-black text-slate-900 mb-6 tracking-tight">University Courses based on your subjects: {subjects.filter(s => s).join(', ')}</h3>
                             <UniversityCourses 
                                 initialCourses={[]}
-                                subjects={subjects}
+                                subjects={subjects.filter(s => s)}
                                 cachedCourses={cachedCourses}
                                 setCachedCourses={setCachedCourses}
                             />
@@ -271,6 +248,7 @@ export const Builder: React.FC<BuilderProps> = ({ onBack }) => {
                     </p>
                 </div>
             </main>
+            <ScrollToTop />
         </div>
     );
 };
