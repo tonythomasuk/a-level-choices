@@ -28,18 +28,24 @@ export const UniversityCourses: React.FC<UniversityCoursesProps> = ({ initialCou
         setLoading(true);
         setError(null);
         try {
-            let foundUnis = 0;
             let allCourses: UniversityCourse[] = [];
             let pool = [...RUSSELL_GROUP_UNIVERSITIES].sort(() => 0.5 - Math.random());
             
-            while (foundUnis < 3 && pool.length > 0) {
-                const uni = pool.pop()!;
-                const courses = await generateUniversityCourses(subjects, uni);
-                if (courses.length > 0) {
-                    allCourses.push(courses[0]); // Take only one
-                    foundUnis++;
+            // Fetch 5 universities in parallel to speed up the process
+            const selectedUnis = pool.slice(0, 5);
+            const results = await Promise.all(
+                selectedUnis.map(uni => generateUniversityCourses(subjects, uni).catch(e => {
+                    console.error(`Failed to fetch for ${uni}`, e);
+                    return [];
+                }))
+            );
+            
+            results.forEach(courses => {
+                if (courses.length > 0 && allCourses.length < 3) {
+                    allCourses.push(courses[0]); // Take only one per uni, up to 3 total
                 }
-            }
+            });
+            
             setCachedCourses(prev => ({...prev, 'All Universities': allCourses}));
         } catch (err) {
             setError('Could not fetch courses. Please try again.');
@@ -134,7 +140,7 @@ export const UniversityCourses: React.FC<UniversityCoursesProps> = ({ initialCou
                             onClick={fetchAllUniversities}
                             className="mt-4 w-full py-3 bg-indigo-600 text-white font-bold rounded-lg hover:bg-indigo-700 transition-colors"
                         >
-                            Find me more Courses
+                            Lets try a few other Courses
                         </button>
                     )}
                 </div>

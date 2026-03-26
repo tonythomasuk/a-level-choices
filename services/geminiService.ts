@@ -38,7 +38,7 @@ const baseAnalysisSchema = {
         },
         popularCareers: {
             type: Type.ARRAY,
-            description: "A list of up to 5 popular careers for this subject combination, explicitly linked to degree pathways.",
+            description: "A diverse list of 8 to 10 popular careers for this subject combination, explicitly linked to degree pathways, ensuring a mix of broad fields and specific vocational routes.",
             items: {
                 type: Type.OBJECT,
                 properties: {
@@ -83,6 +83,7 @@ export const generateInitialAnalysis = async (subjects: string[]): Promise<BaseA
         Analyze the A-level subject combination: ${subjectCombination}.
         Your response must be grounded in official, authoritative UK sources like the Russell Group's 'Informed Choices' guide, UCAS, HESA, and OfQual data.
         CRITICAL INSTRUCTION: Your analysis must first identify the most common university degree categories these subjects lead to (e.g., 'STEM & Engineering', 'Humanities & Social Sciences', 'Creative Arts', 'Business & Economics'). Then, for each career you suggest, you MUST populate the 'degreePathways' field with the relevant categories. This creates a clear pathway from A-levels to degree to career.
+        CRITICAL INSTRUCTION: Ensure the suggested careers represent a diverse mix of options. If the subject combination is a strong prerequisite for specific vocational or competitive professional degrees (e.g., Dentistry, Veterinary Medicine, Architecture, Allied Health Professions), you MUST include them alongside broader academic fields. Do not just list generic options. Provide 8 to 10 diverse careers.
         CRITICAL INSTRUCTION: In the 'body' of the story, provide a detailed analysis of how each of the chosen subjects interacts with the others. Explain the unique ways they complement each other, how they can be applied together in real-world scenarios, and how they collectively build a powerful, versatile skill set for the student.
         Provide a detailed, inspirational, and accurate analysis.
         Correct any subject name typos to their standard A-level names.
@@ -90,12 +91,11 @@ export const generateInitialAnalysis = async (subjects: string[]): Promise<BaseA
     `;
 
     const response = await ai.models.generateContent({
-        model: "gemini-3.1-pro-preview",
+        model: "gemini-3-flash-preview",
         contents: prompt,
         config: {
             responseMimeType: "application/json",
-            responseSchema: baseAnalysisSchema,
-            thinkingConfig: { thinkingLevel: ThinkingLevel.LOW }
+            responseSchema: baseAnalysisSchema
         },
     });
 
@@ -117,6 +117,7 @@ export const generateBuilderCourses = async (major: string, minors: string[], ta
         You are an expert UK university admissions advisor.
         A student wants to study a combination of "${major}" as a major and "${minors.join(', ')}" as minors at a Russell Group university.
         ${uniFilter}Search across the 24 Russell Group Universities and identify up to 10 undergraduate course titles featuring this particular combination (e.g., Joint Honours, Major/Minor, or single honours that heavily feature these subjects).
+        When identifying courses, ensure a diverse mix of standard degrees and specialized/vocational degrees that fit the major/minor combination.
         For each course, provide:
         1. Course Title
         2. University Name
@@ -189,10 +190,11 @@ export const generateUniversityCourses = async (subjects: string[], university: 
         ${universityFilter}
         You must follow these rules:
         1.  **Verification:** All information MUST be verified against the official university website and UCAS for the upcoming academic year. All URLs must be valid and deep-link directly to the course information page.
-        2.  **Subject Matching:** A course is a valid match if its list of *required* A-level subjects is a subset of the student's subjects ("${subjectCombination}"). Use fuzzy matching for subject names (e.g., "Maths" matches "Mathematics", "Biology" matches "a science subject").
-        3.  **No Extraneous Requirements:** If a course requires any A-level subject not in the student's list, it MUST be excluded from the results.
-        4.  **Recommended Subjects:** 'recommendedSubjects' can include subjects outside the student's list.
-        5.  **Matching Explanation:** Provide a detailed explanation in 'matchingExplanation' about how the student's subjects fit the course requirements, especially for recommended subjects. For example, "Your Maths and Physics are required, and your Chemistry is highly recommended for this Engineering course."
+        2.  **Course Diversity:** Ensure the courses represent a diverse mix of degree types. Do not just list generic degrees (e.g., if the student has Biology and Chemistry, do not just list Biomedical Science courses; you must include specific vocational courses like Dentistry, Veterinary Science, or Optometry if they meet the strict requirements).
+        3.  **Subject Matching:** A course is a valid match if its list of *required* A-level subjects is a subset of the student's subjects ("${subjectCombination}"). Use fuzzy matching for subject names (e.g., "Maths" matches "Mathematics", "Biology" matches "a science subject").
+        4.  **No Extraneous Requirements:** If a course requires any A-level subject not in the student's list, it MUST be excluded from the results.
+        5.  **Recommended Subjects:** 'recommendedSubjects' can include subjects outside the student's list.
+        6.  **Matching Explanation:** Provide a detailed explanation in 'matchingExplanation' about how the student's subjects fit the course requirements, especially for recommended subjects. For example, "Your Maths and Physics are required, and your Chemistry is highly recommended for this Engineering course."
         Return the data as a JSON array matching the specified schema.
     `;
     
